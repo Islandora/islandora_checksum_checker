@@ -1,0 +1,229 @@
+<?php
+
+/**
+ * @file
+ * The main Islandora Checksum Checker module file. 
+ */
+
+/**
+* Implements hook_cron().
+*/
+function islandora_checksum_checker_cron() {
+  // Populate the queue with the next N object PIDs.
+  $queue = DrupalQueue::get('validateIslandoraChecksums');
+  $objects_to_check = islandora_checksum_checker_get_objects();
+  foreach($objects_to_check as $object) {
+    $queue->createItem($object);
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_checksum_checker_menu() {
+  $items = array();
+  $items['admin/islandora/checksum_checker'] = array(
+    'title' => 'Checksum checker',
+    'description' => 'Configure the Islandora Checksum Checker.',
+    'page callback' => 'drupal_get_form',
+    'access arguments' => array('administer site configuration'),
+    'page arguments' => array('islandora_checksum_checker_admin_settings'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Admin settings form builder.
+ */
+function islandora_checksum_checker_admin_settings() {
+  $form['islandora_checksum_checker_items_per_cron'] = array(
+    '#title' => t('Number of items to add to queue per cron run'),
+    '#type' => 'textfield',
+    '#size' => 5,
+    '#default_value' => variable_get('islandora_checksum_checker_items_per_cron', '50'),
+    '#description' => t("Only decrease if you...."),
+    '#maxlength' => 5,
+    '#required' => TRUE,
+  );
+  $form['islandora_checksum_checker_dsids_to_check'] = array(
+    '#title' => t('Datastreams to check'),
+    '#type' => 'textfield',
+    '#size' => 60,
+    '#default_value' => variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'),
+    '#description' => t("A comma-separated list of DSIDs."),
+    '#maxlength' => 255,
+    '#required' => TRUE,
+  );
+
+
+  return system_settings_form($form);
+}
+
+/**
+* Implements hook_cron_queue_info().
+*/
+function islandora_checksum_checker_cron_queue_info() {
+  $queues = array();
+  $queues['validateIslandoraChecksums'] = array(
+    'worker callback' => 'islandora_checksum_checker_process_queue_item', 
+    'time' => 60, 
+  );
+  return $queues;
+}
+
+/**
+ * Queue worker callback. Processes one queue item.
+ */
+function islandora_checksum_checker_process_queue_item() {
+  $queue = DrupalQueue::get('validateIslandoraChecksums');
+  // Get the next queue item.
+  while ($item = $queue->claimItem()) {
+    // $item->data will be an Islandora object's PID.
+    if (islandora_checksum_checker_validate_checksum($item->data)) {
+      // If success, remove the item from queue.
+      $queue->deleteItem($item);
+    }
+    else {
+      // @todo: Log failure to watchdog.
+      // Release, not delete the item so it remains in the queue.
+      $queue->releaseItem($item);
+    }
+  }
+}
+
+/**
+ * Performs the checksum validation. If checksums are not turned on, 
+ * $ds_info = $connection->api->m->getDatastream($pid, $dsid,
+ *   array('validateChecksum' => TRUE)); returns
+ (
+    [dsLabel] => MODS Record
+    [dsVersionID] => MODS.14
+    [dsCreateDate] => 2013-12-16T16:53:13.250Z
+    [dsState] => A
+    [dsMIME] => text/xml
+    [dsFormatURI] =>
+    [dsControlGroup] => M
+    [dsSize] => 1692
+    [dsVersionable] => true
+    [dsInfoType] =>
+    [dsLocation] => islandora:1+MODS+MODS.14
+    [dsLocationType] => INTERNAL_ID
+    [dsChecksumType] => DISABLED
+    [dsChecksum] => none
+    [dsChecksumValid] => true
+ )
+ but if they are turned on, it returns
+ (
+    [dsLabel] => MODS Record
+    [dsVersionID] => MODS.5
+    [dsCreateDate] => 2013-12-16T16:58:01.694Z
+    [dsState] => A
+    [dsMIME] => text/xml
+    [dsFormatURI] =>
+    [dsControlGroup] => M
+    [dsSize] => 1281
+    [dsVersionable] => true
+    [dsInfoType] =>
+    [dsLocation] => islandora:214+MODS+MODS.5
+    [dsLocationType] => INTERNAL_ID
+    [dsChecksumType] => SHA-1
+    [dsChecksum] => 3a1e474b16c669ba4a220b683585edb07c82af18
+    [dsChecksumValid] => true
+ )
+ *
+ * @param string $pid
+ *  The PID as retrieved from the queue.
+ *
+ * @return bool
+ *
+ * @todo: Make the PREMIS message 'themable', i.e., easily
+ *   customizable via a theme function.
+ *
+ * @todo: Add error catching so that if there is a problem
+ *   validating the checksum on a datastream, we can return
+ *   FALSE.
+ */
+function islandora_checksum_checker_validate_checksum($pid) {
+  $datastreams_to_check = explode(',', variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'));
+  // Make sure there are no spaces around the DSIDs, 
+  // so we can get a match in in_array()..
+  foreach ($datastreams_to_check as &$dsid) {
+    $dsid = trim($dsid);
+  }
+  
+  $tuque = islandora_get_tuque_connection();
+  $islandora_object = islandora_object_load($pid);  
+
+  foreach ($islandora_object as $ds) {
+    if (in_array($ds->id, $datastreams_to_check)) {
+      $ds_info = $tuque->api->m->getDatastream($pid, $ds->id, array('validateChecksum' => TRUE));
+      $premis_event_type = 'PREMIS:eventType=fixity check; ';
+      $premis_file_location = 'PREMIS:file=' . $ds_info['dsLocation'] .'; ';
+      // Checksums are enabled.
+      if ($ds_info['dsChecksumType'] != 'DISABLED') {
+        if ($ds_info['dsChecksumValid'] == 'true') {
+          // We have a validated checksum.
+          $premis_event_outcome = 'PREMIS:eventOutcome=' . $ds_info['dsChecksumType'] . ' checksum validated.';
+        } 
+        else {
+          // We have an invalid checksum.
+          $premis_event_outcome = 'PREMIS:eventOutcome=' . $ds_info['dsChecksumType'] . ' invalid checksum detected.';
+        }
+      }
+      else {
+        // Checksums are not enabled.
+          $premis_event_outcome = 'PREMIS:eventOutcome=Checksums not enabled.';
+      }
+      // Update the object ($log_message will appear in audit log).
+      $log_message = array('logMessage' => $premis_event_type . $premis_file_location . $premis_event_outcome);
+      $tuque->api->m->modifyObject($pid, $log_message);
+    }
+  }
+
+  return TRUE;
+}
+
+/**
+ * Query the RI index to get PIDs of all objects that belong
+ * to a collection but are not a collection object.
+ *
+ * @return array
+ */
+function islandora_checksum_checker_get_objects() {
+  $limit = variable_get('islandora_checksum_checker_items_per_cron', '50');
+  $offset = variable_get('islandora_checksum_checker_last_item_checked', '0');
+  $query_offset = (int) $offset + 1;
+  // List of objects to create Bags for.
+  $objects_to_bag = array();
+
+  // Query the rindex to get all the objects that have a 'isMemberOfCollection'
+  // relationship but that do not have a 'islandora:collectionCModel' content
+  // model. Sort oldest to newest.
+  $tuque = islandora_get_tuque_connection();
+  $ri_query = 'select $object $created from <#ri>
+    where  $object <fedora-rels-ext:isMemberOfCollection> $collection
+    and $object <fedora-model:createdDate> $created
+    minus
+    $object <fedora-model:hasModel> <info:fedora/islandora:collectionCModel>
+    order by $created asc' . "\n" .
+    "limit $limit offset " . (string) $query_offset;
+  $results = $tuque->repository->ri->itqlQuery($ri_query, 'unlimited');
+
+  foreach ($results as $member) {
+      $objects_to_check[] = $member['object']['value'];
+  }
+
+  // If the number of results returned is fewer than or equal to $offset,
+  // assume that we have gotten all objects from the rindex and reset 
+  // $offset to 0.
+  if (count($results) <= $limit) {
+    $offset = 0;
+  }
+  else {
+    $offset = (int) $offset + (int) $limit;
+  }
+  variable_set('islandora_checksum_checker_last_item_checked', $offset);
+
+  return $objects_to_check;
+}

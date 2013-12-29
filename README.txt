@@ -14,6 +14,13 @@ Installation
 Same as any Drupal module. Only prerequisite is theIslandora
 Checksum module, https://github.com/ruebot/islandora_checksum.
 
+Configuration
+=============
+
+This module implements hook_cron() to add populate a Drupal Queue API
+queue of items to check. No configuration is required other than making
+sure you are running cron on your Islandora site.
+
 Author/maintainer
 =================
 

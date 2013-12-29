@@ -17,9 +17,12 @@ Checksum module, https://github.com/ruebot/islandora_checksum.
 Configuration
 =============
 
-This module implements hook_cron() to add populate a Drupal Queue API
-queue of items to check. No configuration is required other than making
-sure you are running cron on your Islandora site.
+You should visit the admin form for this module at admin/islandora/checksum_checker
+and indicate the datastreams you want to have checked.
+
+Also, this module implements hook_cron() to populate a Drupal Queue API
+queue of items to check. No configuration is required other than making sure
+you are running cron on your Islandora site.
 
 Author/maintainer
 =================

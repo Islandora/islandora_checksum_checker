@@ -34,6 +34,22 @@ function islandora_checksum_checker_menu() {
 }
 
 /**
+ * Implements hook_theme().
+ */
+function islandora_checksum_checker_theme() {
+  return array(
+    'premis_fixity_check' => array(
+      'variables' => array(
+        'ds_location' => NULL,
+        'ds_checksum_type' => NULL,
+        'outcome' => NULL,
+      ),
+      'template' => 'premis-fixity-check',
+    ),
+  );
+}
+
+/**
  * Admin settings form builder.
  */
 function islandora_checksum_checker_admin_settings() {
@@ -176,19 +192,16 @@ function islandora_checksum_checker_validate_checksum($pid) {
   foreach ($islandora_object as $ds) {
     if (in_array($ds->id, $datastreams_to_check)) {
       $ds_info = $tuque->api->m->getDatastream($pid, $ds->id, array('validateChecksum' => TRUE));
-      $premis_event_type = 'PREMIS:eventType=fixity check; ';
-      $premis_file_location = 'PREMIS:file=' . $ds_info['dsLocation'] .'; ';
       // Checksums are enabled.
       if ($ds_info['dsChecksumType'] != 'DISABLED') {
         if ($ds_info['dsChecksumValid'] == 'true') {
           // We have a validated checksum.
-          $premis_event_outcome = 'PREMIS:eventOutcome=' . 
-            $ds_info['dsChecksumType'] . ' checksum validated.';
+          $outcome = 'valid';
         } 
         else {
           // We have an invalid checksum.
-          $premis_event_outcome = 'PREMIS:eventOutcome=' . 
-            $ds_info['dsChecksumType'] . ' invalid checksum detected.';
+          $outcome = 'invalid';
+
           // @todo: To get a single report for all mismatches, stash a noticiation in the $_SESSION
           // and put them all into one message at the end of the cron run.
           islandora_checksum_checker_send_mismatch_notice($pid, $ds->id, $ds_info['dsChecksumType']);
@@ -196,11 +209,12 @@ function islandora_checksum_checker_validate_checksum($pid) {
       }
       else {
         // Checksums are not enabled.
-          $premis_event_outcome = 'PREMIS:eventOutcome=Checksums not enabled.';
+        $outcome = 'disabled';
       }
       // Update the object ($log_message will appear in audit log).
-      $log_message = array('logMessage' => $premis_event_type . $premis_file_location . 
-        $premis_event_outcome);
+      $fixity_event_message = theme('premis_fixity_check', array('ds_location' => $ds_info['dsLocation'],
+        'ds_checksum_type' => $ds_info['dsChecksumType'], 'outcome' => $outcome));
+      $log_message = array('logMessage' => $fixity_event_message);
       $tuque->api->m->modifyObject($pid, $log_message);
     }
   }
@@ -267,6 +281,10 @@ function islandora_checksum_checker_get_objects() {
   return $objects_to_check;
 }
 
+function theme_premis_fixity_check() {
+    
+}
+
 /**
  * Assembles the email message sent if there is checksum mismatch.
  * 
@@ -311,7 +329,6 @@ function islandora_checksum_checker_mail($key, &$message, $params) {
   );
 
   switch ($key) {
-    // Send a simple message from the contact form.
     case 'checksum_validation_failure':
       $message['subject'] = t('Checksum validation failure from @site-name',
         array('@site-name' => variable_get('site_name', 'Drupal')), $options);
@@ -327,4 +344,5 @@ function islandora_checksum_checker_mail($key, &$message, $params) {
       break;
   }
 }
+
 

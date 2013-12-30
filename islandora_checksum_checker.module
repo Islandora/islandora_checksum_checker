@@ -171,9 +171,6 @@ function islandora_checksum_checker_process_queue_item() {
  *
  * @return bool
  *
- * @todo: Make the PREMIS message 'themable', i.e., easily
- *   customizable via a theme function.
- *
  * @todo: Add error catching so that if there is a problem
  *   validating the checksum on a datastream, we can return
  *   FALSE.
@@ -284,6 +281,7 @@ function islandora_checksum_checker_get_objects($items_still_in_queue) {
   else {
     $offset = (int) $offset + (int) $limit;
   }
+  // Update the offset for use in next cron run.
   variable_set('islandora_checksum_checker_last_item_checked', $offset);
 
   return $objects_to_check;

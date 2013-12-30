@@ -38,11 +38,11 @@ function islandora_checksum_checker_menu() {
  */
 function islandora_checksum_checker_admin_settings() {
   $form['islandora_checksum_checker_items_per_cron'] = array(
-    '#title' => t('Number of items to add to queue per cron run'),
+    '#title' => t('Number of objects to check per cron run'),
     '#type' => 'textfield',
     '#size' => 5,
     '#default_value' => variable_get('islandora_checksum_checker_items_per_cron', '50'),
-    '#description' => t("Only decrease if you are getting cron timeouts."),
+    '#description' => t("Decrease this number if you are getting cron timeouts."),
     '#maxlength' => 5,
     '#required' => TRUE,
   );
@@ -55,20 +55,20 @@ function islandora_checksum_checker_admin_settings() {
     '#maxlength' => 255,
     '#required' => TRUE,
   );
-  $site_mail = variable_get('site_mail', 'admin@example.com');
   $form['islandora_checksum_checker_email_reports_to'] = array(
     '#title' => t('Send reports to'),
     '#type' => 'textfield',
     '#size' => 60,
-    '#default_value' => variable_get('islandora_checksum_checker_email_reports_to', $site_mail),
-    '#description' => t("The email address(es) that reports of checksum mismatches, check 
-      completion, etc. should be sent to. Separate multiple addresses with a comma."),
+    '#default_value' => variable_get('islandora_checksum_checker_email_reports_to',
+      variable_get('site_mail', 'admin@example.com')),
+    '#description' => t("The email address(es) that reports of checksum mismatches, verification 
+      cycle completion, etc. should be sent to. Separate multiple addresses with a comma."),
     '#maxlength' => 255,
     '#required' => TRUE,
   );
   $form['islandora_checksum_checker_send_complete_message'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Send check completion notice'),
+    '#title' => t('Send verification cycle completion notice'),
     '#default_value' => variable_get('islandora_checksum_checker_send_complete_message', 0),
     '#description' => t("Check this option if you want to be notified that all objects have
       had their datastreams' checksums checked."),
@@ -250,8 +250,8 @@ function islandora_checksum_checker_get_objects() {
       $objects_to_check[] = $member['object']['value'];
   }
 
-  // If the number of results returned is fewer than or equal to $limit,
-  // assume that we have gotten all objects from the rindex and reset 
+  // If the number of results returned is fewer than $limit, assume
+  // that we have gotten all objects from the rindex and reset 
   // $offset to 0.
   if (count($results) < $limit) {
     $offset = 0;
@@ -285,7 +285,6 @@ function islandora_checksum_checker_send_mismatch_notice($pid, $ds_id, $checksum
     variable_get('site_mail', 'admin@example.com'));
   $from = variable_get('site_mail', 'admin@example.com');
   $params = array('pid' => $pid, 'dsid' => $ds_id, 'checksumtype' => $checksum_type);
-
   $result = drupal_mail('islandora_checksum_checker', 'checksum_validation_failure',
     $to, $language, $params, $from, TRUE);   
 }

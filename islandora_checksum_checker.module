@@ -11,7 +11,8 @@
 function islandora_checksum_checker_cron() {
   // Populate the queue with the next $objects_to_check object PIDs.
   $queue = DrupalQueue::get('validateIslandoraChecksums');
-  $objects_to_check = islandora_checksum_checker_get_objects();
+  $items_still_in_queue = $queue->numberOfItems();
+  $objects_to_check = islandora_checksum_checker_get_objects($items_still_in_queue);
   foreach($objects_to_check as $object) {
     $queue->createItem($object);
   }
@@ -227,16 +228,26 @@ function islandora_checksum_checker_validate_checksum($pid) {
  * to a collection but are not a collection object. Uses the system variable
  * 'islandora_checksum_checker_last_item_checked' to page through all
  * the objects in the repo.
+ * 
+ * @param string $items_still_in_queue
+ *   The number of items left in the queue from last cron run (due to
+ *   releaseItem(), etc.).
  *
  * @return array
  */
-function islandora_checksum_checker_get_objects() {
+function islandora_checksum_checker_get_objects($items_still_in_queue) {
   // Set up the limit and offset for the RI query.
   $limit = variable_get('islandora_checksum_checker_items_per_cron', '50');
+  // Adjust $limit to account for items left in queue. If $items_still_in_queue
+  // is greater than or equal to $limit, use the configured value for $limit.
+  if ($limit > $items_still_in_queue) {
+    $limit = (int) $limit - (int) $items_still_in_queue;
+  }
   $offset = variable_get('islandora_checksum_checker_last_item_checked', '0');
   // We need to add 1 to the offset so we can use it in the RI query, except
   // the first time this function is invoked ('islandora_checksum_checker_last_item_checked'
-  // is set to 0 in the .install file.
+  // is set to 0 in the .install file) or when we have completed a validation
+  // cycle and reset $offset to 0 below.
   if ($offset == '0') {
     $query_offset = '0';
   }

@@ -1,0 +1,12 @@
+<?php
+/**
+ * @file
+ * Install related hooks.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function islandora_checksum_checker_install() {
+  variable_set('islandora_checksum_checker_last_item_checked', '0');
+}

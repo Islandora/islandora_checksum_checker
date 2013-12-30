@@ -10,6 +10,12 @@ audit log for each datastream checked. Please note that adding this
 entry updates the object (specifically, it changes the object's
 lastModifiedDate).
 
+With each run of your site's cron, this module performs checksum
+verification on a configurable number of objects' datastreams. When
+it has checked all objects (from oldest to newest), it will start
+from the beginning (i.e. with the oldest object in your repository)
+and repeat the verification cycle.
+
 Installation
 ============
 

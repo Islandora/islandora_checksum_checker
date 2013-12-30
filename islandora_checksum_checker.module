@@ -2,7 +2,7 @@
 
 /**
  * @file
- * The main Islandora Checksum Checker module file. 
+ * The main Islandora Checksum Checker module file.
  */
 
 /**
@@ -77,7 +77,7 @@ function islandora_checksum_checker_admin_settings() {
     '#size' => 60,
     '#default_value' => variable_get('islandora_checksum_checker_email_reports_to',
       variable_get('site_mail', 'admin@example.com')),
-    '#description' => t("The email address(es) that reports of checksum mismatches, verification 
+    '#description' => t("The email address(es) that reports of checksum mismatches, verification
       cycle completion, etc. should be sent to. Separate multiple addresses with a comma."),
     '#maxlength' => 255,
     '#required' => TRUE,
@@ -99,8 +99,8 @@ function islandora_checksum_checker_admin_settings() {
 function islandora_checksum_checker_cron_queue_info() {
   $queues = array();
   $queues['validateIslandoraChecksums'] = array(
-    'worker callback' => 'islandora_checksum_checker_process_queue_item', 
-    'time' => 60, 
+    'worker callback' => 'islandora_checksum_checker_process_queue_item',
+    'time' => 60,
   );
   return $queues;
 }
@@ -126,7 +126,7 @@ function islandora_checksum_checker_process_queue_item() {
 }
 
 /**
- * Performs the checksum validation. If checksums are not turned on, 
+ * Performs the checksum validation. If checksums are not turned on,
  * $ds_info = $connection->api->m->getDatastream($pid, $dsid,
  *   array('validateChecksum' => TRUE)); returns
  (
@@ -178,16 +178,16 @@ function islandora_checksum_checker_process_queue_item() {
  *   FALSE.
  */
 function islandora_checksum_checker_validate_checksum($pid) {
-  $datastreams_to_check = explode(',', 
+  $datastreams_to_check = explode(',',
     variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'));
   // Make sure there are no spaces around the DSIDs, 
   // so we can get a match in in_array()..
   foreach ($datastreams_to_check as &$dsid) {
     $dsid = trim($dsid);
   }
-  
+
   $tuque = islandora_get_tuque_connection();
-  $islandora_object = islandora_object_load($pid);  
+  $islandora_object = islandora_object_load($pid); 
 
   foreach ($islandora_object as $ds) {
     if (in_array($ds->id, $datastreams_to_check)) {
@@ -236,16 +236,13 @@ function islandora_checksum_checker_get_objects() {
   $offset = variable_get('islandora_checksum_checker_last_item_checked', '0');
   // We need to add 1 to the offset so we can use it in the RI query, except
   // the first time this function is invoked ('islandora_checksum_checker_last_item_checked'
-  // is set to 0 in the .install file. 
+  // is set to 0 in the .install file.
   if ($offset == '0') {
     $query_offset = '0';
   }
   else {
     $query_offset = (int) $offset + 1;
   }
-  
-  // List of objects to create Bags for.
-  $objects_to_bag = array();
 
   // Query the rindex to get all the objects that have a 'isMemberOfCollection'
   // relationship but that do not have a 'islandora:collectionCModel' content
@@ -265,7 +262,7 @@ function islandora_checksum_checker_get_objects() {
   }
 
   // If the number of results returned is fewer than $limit, assume
-  // that we have gotten all objects from the rindex and reset 
+  // that we have gotten all objects from the rindex and reset
   // $offset to 0.
   if (count($results) < $limit) {
     $offset = 0;
@@ -281,19 +278,15 @@ function islandora_checksum_checker_get_objects() {
   return $objects_to_check;
 }
 
-function theme_premis_fixity_check() {
-    
-}
-
 /**
  * Assembles the email message sent if there is checksum mismatch.
- * 
+ *
  * @param string $pid
  *   The PID of the Islandora object.
- * 
+ *
  * @param string $ds_id
  *   The DSID of the datastream reporing the mismatch.
- * 
+ *
  * @param string $checksum_type
  *   The type of checksum (MD5, SHA-1, etc.) reporting the mismatch.
  */
@@ -304,7 +297,7 @@ function islandora_checksum_checker_send_mismatch_notice($pid, $ds_id, $checksum
   $from = variable_get('site_mail', 'admin@example.com');
   $params = array('pid' => $pid, 'dsid' => $ds_id, 'checksumtype' => $checksum_type);
   $result = drupal_mail('islandora_checksum_checker', 'checksum_validation_failure',
-    $to, $language, $params, $from, TRUE);   
+    $to, $language, $params, $from, TRUE);
 }
 
 /**
@@ -317,7 +310,7 @@ function islandora_checksum_checker_send_check_complete_message() {
   $from = variable_get('site_mail', 'admin@example.com');
   $params = array();
   $result = drupal_mail('islandora_checksum_checker', 'all_objects_checked',
-    $to, $language, $params, $from, TRUE);   
+    $to, $language, $params, $from, TRUE);
 }
 
 /**
@@ -332,7 +325,7 @@ function islandora_checksum_checker_mail($key, &$message, $params) {
     case 'checksum_validation_failure':
       $message['subject'] = t('Checksum validation failure from @site-name',
         array('@site-name' => variable_get('site_name', 'Drupal')), $options);
-      $message['body'][] = t('@type checksum validation attempt on PID @pid datastream @dsid returned false', 
+      $message['body'][] = t('@type checksum validation attempt on PID @pid datastream @dsid returned false',
         array('@type' => $params['checksumtype'], '@pid' => $params['pid'],
           '@dsid' => $params['dsid']), $options);
       break;

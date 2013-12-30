@@ -13,8 +13,13 @@ lastModifiedDate).
 Installation
 ============
 
-Same as any Drupal module. The only prerequisite is the Islandora
-Checksum module, https://github.com/ruebot/islandora_checksum.
+Same as any Drupal module. There are no prerequisites other than
+Islandora. 
+
+However, this module is only useful if you use FedoraCommons to generate
+checksums on datastreams. The easiest way to have FedoraCommons generate
+checksums is to install and enable the Islandora Checksum module, 
+https://github.com/ruebot/islandora_checksum.
 
 Configuration
 =============

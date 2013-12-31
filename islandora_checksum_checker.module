@@ -354,7 +354,7 @@ function islandora_checksum_checker_mail($key, &$message, $params) {
     case 'all_objects_checked':
       $message['subject'] = t('Checksum validation complete for @site-name',
         array('@site-name' => variable_get('site_name', 'Drupal')), $options);
-      $message['body'][] = t("All objects have had their datastream checksums verified\n\n" .
+      $message['body'][] = t("All objects have had their datastream checksums verified.\n\n" .
         "A new verification cycle will start the next time cron runs.");
       break;
   }

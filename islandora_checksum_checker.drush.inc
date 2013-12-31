@@ -9,13 +9,19 @@
  * about datastreams and to update objects. Anonymous Drupal users may
  * not have sufficient privileges to perform these tasks. This drush
  * script offers an alternative to having Drupal 7 cron populate and
- * process the Islandora Checksum Checker job queue. 
+ * process the Islandora Checksum Checker job queue. It uses configuration
+ * options defined in the Islandora Checksum Checker module's admin
+ * settings.
  * 
- * This script should be run with the drush --user parameter indicating
- * an Islandora user with sufficient privileges to access all objects in
- * your Fedora repository. It uses configuration options defined at the
- * Islandora Checksum Checker module's admin settings, 
- * admin/islandora/checksum_checker. 
+ * This script should be run as a Linux cron job with the drush --user
+ * parameter indicating an Islandora user with sufficient privileges to
+ * access all objects in your Fedora repository and the --root parameter
+ * indicating the path to your Drupal installation root.
+ *
+ * A typical Linux crontab entry (in this case, to run every hour) for 
+ * this drush script is:
+ *
+   0 * * * * /usr/bin/drush --root=/var/www --user=fedoraAdmin run-islandora-checksum-queue
  */
 
 /**

@@ -38,15 +38,15 @@ This module implements hook_cron() to populate a Drupal Queue API queue
 of items to check. No configuration is required other than making sure
 you are running cron on your Islandora site. However, if you have objects
 in your repository that are not viewable by the Drupal anonymous user,
-cron will not work as Drupal 7's cron runs as that user. In this case,
+cron will not work because Drupal 7's cron runs as that user. In this case,
 you should use the included drush script to populate and process the
-queue:
+queue. Running this script as a Linux cron job will serve the same purpose
+as using Drupal's cron. A typical crontab entry is:
 
-  drush --user=fedoraAdmin run-islandora-checksum-queue
-  
-Running this script as a Linux cron job will serve the same purpose as
-using Drupal's cron. Be sure to select this option in the module's admin
-settings (of course, you need to set up the cron job as well).
+  0 * * * * /usr/bin/drush --root=/var/www --user=fedoraAdmin run-islandora-checksum-queue
+
+Be sure to select 'drush script' under the 'Cron method' in the module's
+admin settings.
 
 Author/maintainer
 =================

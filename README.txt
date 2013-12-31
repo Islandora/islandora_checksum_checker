@@ -34,9 +34,19 @@ You should visit the admin form for this module at
 admin/islandora/checksum_checker and indicate the datastreams you want 
 to have checked.
 
-Also, this module implements hook_cron() to populate a Drupal Queue API
-queue of items to check. No configuration is required other than making sure
-you are running cron on your Islandora site.
+This module implements hook_cron() to populate a Drupal Queue API queue
+of items to check. No configuration is required other than making sure
+you are running cron on your Islandora site. However, if you have objects
+in your repository that are not viewable by the Drupal anonymous user,
+cron will not work as Drupal 7's cron runs as that user. In this case,
+you should use the included drush script to populate and process the
+queue:
+
+  drush --user=fedoraAdmin run-islandora-checksum-queue
+  
+Running this script as a Linux cron job will serve the same purpose as
+using Drupal's cron. Be sure to select this option in the module's admin
+settings (of course, you need to set up the cron job as well).
 
 Author/maintainer
 =================

@@ -9,12 +9,14 @@
 * Implements hook_cron().
 */
 function islandora_checksum_checker_cron() {
-  // Populate the queue with the next $objects_to_check object PIDs.
-  $queue = DrupalQueue::get('validateIslandoraChecksums');
-  $items_still_in_queue = $queue->numberOfItems();
-  $objects_to_check = islandora_checksum_checker_get_objects($items_still_in_queue);
-  foreach($objects_to_check as $object) {
-    $queue->createItem($object);
+  if (variable_get('islandora_checksum_checker_queue_cron_method', 'drupal') == 'drupal') {
+    // Populate the queue with the next $objects_to_check object PIDs.
+    $queue = DrupalQueue::get('validateIslandoraChecksums');
+    $items_still_in_queue = $queue->numberOfItems();
+    $objects_to_check = islandora_checksum_checker_get_objects($items_still_in_queue);
+    foreach($objects_to_check as $object) {
+      $queue->createItem($object);
+    }
   }
 }
 
@@ -54,6 +56,17 @@ function islandora_checksum_checker_theme() {
  * Admin settings form builder.
  */
 function islandora_checksum_checker_admin_settings() {
+  $form['islandora_checksum_checker_queue_cron_method'] = array(
+    '#type' => 'select',
+    '#title' => t('Cron method'),
+    '#default_value' => variable_get('islandora_checksum_checker_queue_cron_method', 'drupal'),
+    '#options' => array(
+      'drupal' => t('Drupal cron'),
+      'drush' => t('drush script'),
+    ),
+    '#description' => t("Choose whether the queue is run using Drupal cron or 
+      via the drush 'run-islandora-checksum-queue' command in a Linux cron job."),
+  );
   $form['islandora_checksum_checker_items_per_cron'] = array(
     '#title' => t('Number of objects to check per cron run'),
     '#type' => 'textfield',

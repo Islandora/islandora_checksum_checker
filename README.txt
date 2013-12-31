@@ -30,7 +30,7 @@ https://github.com/ruebot/islandora_checksum.
 Configuration
 =============
 
-You should visit the admin form for this module at
+You should visit the admin settings form for this module at
 admin/islandora/checksum_checker and indicate the datastreams you want 
 to have checked.
 
@@ -45,8 +45,8 @@ as using Drupal's cron. A typical crontab entry is:
 
   0 * * * * /usr/bin/drush --root=/var/www --user=fedoraAdmin run-islandora-checksum-queue
 
-Be sure to select 'drush script' under the 'Cron method' in the module's
-admin settings.
+If you want to use this method to populate and process the queue, be sure
+to select 'drush script' under 'Cron method' in the module's admin settings.
 
 Author/maintainer
 =================

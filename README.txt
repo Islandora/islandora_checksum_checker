@@ -78,8 +78,9 @@ of the same object's datastream checksums.
 
 Assuming that you configure this module to check 50 objects every time it
 runs and that you have 10,000 objects in your Islandora repository, all 
-objects will be checked every 8 days. If you configure this module to run
-every 6 hours, all objects will be checked every 50 days. 
+objects will be checked every 8 days if you configure it to run every hour.
+If you configure this module to run every 6 hours, all objects will be
+checked every 50 days. 
 
 Also, since the results of the verifcation are recorded in each object's
 audit log, the more often you verify checksums, the larger the audit logs

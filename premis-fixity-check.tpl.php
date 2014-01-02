@@ -25,4 +25,4 @@
       break;
   }
 ?>
-PREMIS:eventType=fixity check; PREMIS:file=<?php print $ds_location; ?>; PREMIS:eventOutcome=<?php print $outcome_message; ?>  
+PREMIS:file=<?php print $ds_location; ?>; PREMIS:eventType=fixity check; PREMIS:eventOutcome=<?php print $outcome_message; ?>  

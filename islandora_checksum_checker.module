@@ -81,9 +81,8 @@ function islandora_checksum_checker_admin_settings() {
     '#type' => 'textfield',
     '#size' => 60,
     '#default_value' => variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'),
-    '#description' => t("A comma-separated list of DSIDs."),
+    '#description' => t("A comma-separated list of DSIDs. Leave empty to check all datastreams."),
     '#maxlength' => 255,
-    '#required' => TRUE,
   );
   $form['islandora_checksum_checker_email_reports_to'] = array(
     '#title' => t('Send reports to'),
@@ -189,8 +188,13 @@ function islandora_checksum_checker_process_queue_item() {
  *   FALSE.
  */
 function islandora_checksum_checker_validate_checksum($pid) {
-  $datastreams_to_check = explode(',',
-    variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'));
+  if (strlen(variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'))) {
+    $datastreams_to_check = explode(',',
+      variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'));
+  }
+  else {
+    $datastreams_to_check = array();
+  }
   // Make sure there are no spaces around the DSIDs, 
   // so we can get a match in in_array()..
   foreach ($datastreams_to_check as &$dsid) {
@@ -201,7 +205,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
   $islandora_object = islandora_object_load($pid); 
 
   foreach ($islandora_object as $ds) {
-    if (in_array($ds->id, $datastreams_to_check)) {
+    if (((count($datastreams_to_check)) === 0) || (in_array($ds->id, $datastreams_to_check))) {
       $ds_info = $tuque->api->m->getDatastream($pid, $ds->id, array('validateChecksum' => TRUE));
       // Checksums are enabled.
       if ($ds_info['dsChecksumType'] != 'DISABLED') {

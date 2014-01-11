@@ -204,33 +204,35 @@ function islandora_checksum_checker_validate_checksum($pid) {
   $tuque = islandora_get_tuque_connection();
   $islandora_object = islandora_object_load($pid); 
 
-  foreach ($islandora_object as $ds) {
-    if (((count($datastreams_to_check)) === 0) || (in_array($ds->id, $datastreams_to_check))) {
-      $ds_info = $tuque->api->m->getDatastream($pid, $ds->id, array('validateChecksum' => TRUE));
-      // Checksums are enabled.
-      if ($ds_info['dsChecksumType'] != 'DISABLED') {
-        if ($ds_info['dsChecksumValid'] == 'true') {
-          // We have a validated checksum.
-          $outcome = 'valid';
-        } 
-        else {
-          // We have an invalid checksum.
-          $outcome = 'invalid';
+  if (count($islandora_object)) {
+    foreach ($islandora_object as $ds) {
+      if (((count($datastreams_to_check)) === 0) || (in_array($ds->id, $datastreams_to_check))) {
+        $ds_info = $tuque->api->m->getDatastream($pid, $ds->id, array('validateChecksum' => TRUE));
+        // Checksums are enabled.
+        if ($ds_info['dsChecksumType'] != 'DISABLED') {
+          if ($ds_info['dsChecksumValid'] == 'true') {
+            // We have a validated checksum.
+            $outcome = 'valid';
+          } 
+          else {
+            // We have an invalid checksum.
+            $outcome = 'invalid';
 
-          // @todo: To get a single report for all mismatches, stash a noticiation in the $_SESSION
-          // and put them all into one message at the end of the cron run.
-          islandora_checksum_checker_send_mismatch_notice($pid, $ds->id, $ds_info['dsChecksumType']);
+            // @todo: To get a single report for all mismatches, stash a noticiation in the $_SESSION
+            // and put them all into one message at the end of the cron run.
+            islandora_checksum_checker_send_mismatch_notice($pid, $ds->id, $ds_info['dsChecksumType']);
+          }
         }
+        else {
+          // Checksums are not enabled.
+          $outcome = 'disabled';
+        }
+        // Update the object ($log_message will appear in audit log).
+        $fixity_event_message = theme('premis_fixity_check', array('ds_location' => $ds_info['dsLocation'],
+          'ds_checksum_type' => $ds_info['dsChecksumType'], 'outcome' => $outcome));
+        $log_message = array('logMessage' => $fixity_event_message);
+        $tuque->api->m->modifyObject($pid, $log_message);
       }
-      else {
-        // Checksums are not enabled.
-        $outcome = 'disabled';
-      }
-      // Update the object ($log_message will appear in audit log).
-      $fixity_event_message = theme('premis_fixity_check', array('ds_location' => $ds_info['dsLocation'],
-        'ds_checksum_type' => $ds_info['dsChecksumType'], 'outcome' => $outcome));
-      $log_message = array('logMessage' => $fixity_event_message);
-      $tuque->api->m->modifyObject($pid, $log_message);
     }
   }
 

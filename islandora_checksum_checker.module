@@ -230,7 +230,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
         // Update the object ($log_message will appear in audit log).
         $fixity_event_message = theme('premis_fixity_check', array('ds_location' => $ds_info['dsLocation'],
           'ds_checksum_type' => $ds_info['dsChecksumType'], 'outcome' => $outcome));
-        $log_message = array('logMessage' => $fixity_event_message);
+        $log_message = array('logMessage' => trim($fixity_event_message));
         $tuque->api->m->modifyObject($pid, $log_message);
       }
     }

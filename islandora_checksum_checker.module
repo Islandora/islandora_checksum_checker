@@ -184,10 +184,6 @@ function islandora_checksum_checker_process_queue_item() {
  *  The PID as retrieved from the queue.
  *
  * @return bool
- *
- * @todo: Add error catching so that if there is a problem
- *   validating the checksum on a datastream, we can return
- *   FALSE.
  */
 function islandora_checksum_checker_validate_checksum($pid) {
   if (strlen(variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'))) {
@@ -197,8 +193,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
   else {
     $datastreams_to_check = array();
   }
-  // Make sure there are no spaces around the DSIDs, 
-  // so we can get a match in in_array()..
+  // Make sure there are no spaces around the DSIDs, so we can get a match in in_array().
   foreach ($datastreams_to_check as &$dsid) {
     $dsid = trim($dsid);
   }
@@ -209,7 +204,15 @@ function islandora_checksum_checker_validate_checksum($pid) {
   if (count($islandora_object)) {
     foreach ($islandora_object as $ds) {
       if (((count($datastreams_to_check)) === 0) || (in_array($ds->id, $datastreams_to_check))) {
-        $ds_info = $tuque->api->m->getDatastream($pid, $ds->id, array('validateChecksum' => TRUE));
+        try {
+          $ds_info = $tuque->api->m->getDatastream($pid, $ds->id, array('validateChecksum' => TRUE));
+        }
+        catch (RepositoryException $e) {
+          watchdog('islandora_checksum_checker', t('Checksums not verified for !object, !ds_id: !message',
+            array('!object' => $pid, '!ds_id' => $ds->id, '!message' => $e->getMessage())),
+              WATCHDOG_WARNING);
+          return FALSE;
+        }
         // Checksums are enabled.
         if ($ds_info['dsChecksumType'] != 'DISABLED') {
           if ($ds_info['dsChecksumValid'] == 'true') {
@@ -233,11 +236,18 @@ function islandora_checksum_checker_validate_checksum($pid) {
         $fixity_event_message = theme('premis_fixity_check', array('ds_location' => $ds_info['dsLocation'],
           'ds_checksum_type' => $ds_info['dsChecksumType'], 'outcome' => $outcome));
         $log_message = array('logMessage' => trim($fixity_event_message));
-        $tuque->api->m->modifyObject($pid, $log_message);
+        try {
+          $tuque->api->m->modifyObject($pid, $log_message);
+        }
+        catch (RepositoryException $e) {
+          watchdog('islandora_checksum_checker', t('Checksums not verified for !object, !ds_id: !message',
+            array('!object' => $pid, '!ds_id' => $ds->id, '!message' => $e->getMessage())),
+              WATCHDOG_WARNING);
+          return FALSE;
+        }
       }
     }
   }
-
   return TRUE;
 }
 

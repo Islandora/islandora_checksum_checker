@@ -76,8 +76,8 @@ function drush_islandora_checksum_checker_run_islandora_checksum_queue() {
     }
     else {
       // Log failure to watchdog.
-      watchdog('islandora_checksum_checker', t('Checksums not verified for !object, will attempt again.',
-        array('!object' => $item->data)), WATCHDOG_WARNING);
+      watchdog('islandora_checksum_checker', 'Checksums not verified for !object, will attempt again.',
+        array('!object' => $item->data), WATCHDOG_WARNING);
       // Release, not delete the item so it remains in the queue.
       $queue->releaseItem($item);
     }

@@ -371,10 +371,12 @@ function islandora_checksum_checker_mail($key, &$message, $params) {
     case 'checksum_validation_failure':
       $message['subject'] = t('Checksum validation failure from @site-name',
         array('@site-name' => variable_get('site_name', 'Drupal')), $options);
-      foreach ($params['mismatches'] as $mismatch) {
-        $message['body'][] = t('@type checksum validation attempt on PID @pid datastream @dsid returned false',
-          array('@type' => $mismatch['checksum_type'], '@pid' => $mismatch['pid'],
-            '@dsid' => $mismatch['ds_id']), $options);
+      if (count($params['mismatches'])) {
+        foreach ($params['mismatches'] as $mismatch) {
+          $message['body'][] = t('@type checksum validation attempt on PID @pid datastream @dsid returned false',
+            array('@type' => $mismatch['checksum_type'], '@pid' => $mismatch['pid'],
+              '@dsid' => $mismatch['ds_id']), $options);
+        }
       }
       break;
     case 'all_objects_checked':

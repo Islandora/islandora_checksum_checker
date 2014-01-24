@@ -228,27 +228,17 @@ function islandora_checksum_checker_validate_checksum($pid) {
           if ($ds_info['dsChecksumValid'] == 'true') {
             // We have a validated checksum.
             $outcome = 'valid';
-            /*
-            if (variable_get('islandora_checksum_checker_log_mismatches', 0)) {
-              watchdog('islandora_checksum_checker', t('@type checksum validation attempt on PID
-                @pid datastream @dsid returned false', array('@type' => $ds_info['dsChecksumType'],
-                '@pid' => $pid, '@dsid' => $ds->id)), WATCHDOG_WARNING);
-            }
-            */
-             // watchdog('islandora_checksum_checker', 'Foo you', WATCHDOG_WARNING);
           }
           else {
             // We have an invalid checksum.
             $outcome = 'invalid';
             $mismatches[] = array('pid' => $pid, 'ds_id' => $ds->id,
               'checksum_type' => $ds_info['dsChecksumType']);
-            /*
             if (variable_get('islandora_checksum_checker_log_mismatches', 0)) {
-              watchdog('islandora_checksum_checker', t('@type checksum validation attempt on PID
+              watchdog('islandora_checksum_checker', '@type checksum validation attempt on PID
                 @pid datastream @dsid returned false', array('@type' => $ds_info['dsChecksumType'],
-                '@pid' => $pid, '@dsid' => $ds->id)), WATCHDOG_WARNING);
+                '@pid' => $pid, '@dsid' => $ds->id), WATCHDOG_WARNING);
             }
-            */
           }
         }
         else {

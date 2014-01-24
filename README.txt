@@ -105,5 +105,5 @@ Mark Jordan <mjordan at sfu dot ca>
 License
 =======
 
-Islandora Checksum Checker is released under the GNU AFFERO GENERAL
+Islandora Checksum Checker is released under the GNU GENERAL
 PUBLIC LICENSE, version 3. See LICENSE.txt for more information.

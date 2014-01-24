@@ -103,6 +103,13 @@ function islandora_checksum_checker_admin_settings() {
     '#description' => t("Check this option if you want to be notified that all objects have
       had their datastreams' checksums checked."),
   );
+  $form['islandora_checksum_checker_log_mismatches'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Log checksum mismatches'),
+    '#default_value' => variable_get('islandora_checksum_checker_log_mismatches', 0),
+    '#description' => t("Checksum mismatches are emailed to the address(es) in 'Send
+      report to', above. Check this option if you want mismatches to also be logged."),
+  );
 
   return system_settings_form($form);
 }
@@ -221,12 +228,27 @@ function islandora_checksum_checker_validate_checksum($pid) {
           if ($ds_info['dsChecksumValid'] == 'true') {
             // We have a validated checksum.
             $outcome = 'valid';
+            /*
+            if (variable_get('islandora_checksum_checker_log_mismatches', 0)) {
+              watchdog('islandora_checksum_checker', t('@type checksum validation attempt on PID
+                @pid datastream @dsid returned false', array('@type' => $ds_info['dsChecksumType'],
+                '@pid' => $pid, '@dsid' => $ds->id)), WATCHDOG_WARNING);
+            }
+            */
+             // watchdog('islandora_checksum_checker', 'Foo you', WATCHDOG_WARNING);
           }
           else {
             // We have an invalid checksum.
             $outcome = 'invalid';
             $mismatches[] = array('pid' => $pid, 'ds_id' => $ds->id,
               'checksum_type' => $ds_info['dsChecksumType']);
+            /*
+            if (variable_get('islandora_checksum_checker_log_mismatches', 0)) {
+              watchdog('islandora_checksum_checker', t('@type checksum validation attempt on PID
+                @pid datastream @dsid returned false', array('@type' => $ds_info['dsChecksumType'],
+                '@pid' => $pid, '@dsid' => $ds->id)), WATCHDOG_WARNING);
+            }
+            */
           }
         }
         else {
@@ -387,5 +409,3 @@ function islandora_checksum_checker_mail($key, &$message, $params) {
       break;
   }
 }
-
-

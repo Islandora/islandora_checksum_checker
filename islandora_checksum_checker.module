@@ -140,8 +140,8 @@ function islandora_checksum_checker_process_queue_item() {
     }
     else {
       // Log failure to watchdog.
-      watchdog('islandora_checksum_checker', t('Checksums not verified for !object, will attempt again.',
-        array('!object' => $item->data)), WATCHDOG_WARNING);
+      watchdog('islandora_checksum_checker', 'Checksums not verified for !object, will attempt again.',
+        array('!object' => $item->data), WATCHDOG_WARNING);
       // Release, not delete the item so it remains in the queue.
       $queue->releaseItem($item);
     }
@@ -218,8 +218,8 @@ function islandora_checksum_checker_validate_checksum($pid) {
           $ds_info = $tuque->api->m->getDatastream($pid, $ds->id, array('validateChecksum' => TRUE));
         }
         catch (RepositoryException $e) {
-          watchdog('islandora_checksum_checker', t('Checksums not verified for !object, !ds_id: !message',
-            array('!object' => $pid, '!ds_id' => $ds->id, '!message' => $e->getMessage())),
+          watchdog('islandora_checksum_checker', 'Checksums not verified for !object, !ds_id: !message',
+            array('!object' => $pid, '!ds_id' => $ds->id, '!message' => $e->getMessage()),
               WATCHDOG_WARNING);
           return FALSE;
         }
@@ -253,8 +253,8 @@ function islandora_checksum_checker_validate_checksum($pid) {
           $tuque->api->m->modifyObject($pid, $log_message);
         }
         catch (RepositoryException $e) {
-          watchdog('islandora_checksum_checker', t('Checksums not verified for !object, !ds_id: !message',
-            array('!object' => $pid, '!ds_id' => $ds->id, '!message' => $e->getMessage())),
+          watchdog('islandora_checksum_checker', 'Checksums not verified for !object, !ds_id: !message',
+            array('!object' => $pid, '!ds_id' => $ds->id, '!message' => $e->getMessage()),
               WATCHDOG_WARNING);
           return FALSE;
         }

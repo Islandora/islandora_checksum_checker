@@ -80,4 +80,5 @@ function drush_islandora_checksum_checker_run_islandora_checksum_queue() {
       $queue->releaseItem($item);
     }
   }
+  islandora_checksum_checker_send_mismatch_notice();
 }

@@ -19,9 +19,11 @@
  * indicating the path to your Drupal installation root.
  *
  * A typical Linux crontab entry (in this case, to run every hour) for 
- * this drush script is:
+ * this drush script is ('\' at end of first line is to break command
+ * to meet Drupal's 80-character line limitation):
  *
-   0 * * * * /usr/bin/drush --root=/var/www --user=fedoraAdmin run-islandora-checksum-queue
+ * 0 * * * * /usr/bin/drush --root=/var/www --user=fedoraAdmin \
+ *   run-islandora-checksum-queue
  */
 
 /**

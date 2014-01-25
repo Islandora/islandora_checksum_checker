@@ -19,10 +19,10 @@ before_install:
   - ln -s $TRAVIS_BUILD_DIR sites/all/modules/islandora_checksum_checker
   - ln -s $HOME/islandora_solution_pack_collection sites/all/modules/islandora_solution_pack_collection
   - drush en --user=1 --yes islandora_basic_collection
-  - drush en --yes --user=1 islandora_checksum_checker
+  - drush en --user=1 --yes islandora_checksum_checker
 script:
   - ant -buildfile sites/all/modules/islandora_checksum_checker/build.xml lint
-  - $ISLANDORA_DIR/tests/scripts/line_endings.sh sites/default/modules/islandora_checksum_checker
+  - $ISLANDORA_DIR/tests/scripts/line_endings.sh sites/all/modules/islandora_checksum_checker
   - drush coder-review --reviews=production,security,style,i18n,potx,sniffer islandora_checksum_checker
-  - phpcpd --names *.module,*.inc,*.test sites/default/modules/islandora_checksum_checker
+  - phpcpd --names *.module,*.inc,*.test sites/all/modules/islandora_checksum_checker
   - drush test-run --uri=http://localhost:8081 "Islandora Checksum Checker"

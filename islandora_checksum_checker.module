@@ -6,15 +6,15 @@
  */
 
 /**
-* Implements hook_cron().
-*/
+ * Implements hook_cron().
+ */
 function islandora_checksum_checker_cron() {
   if (variable_get('islandora_checksum_checker_queue_cron_method', 'drupal') == 'drupal') {
     // Populate the queue with the next $objects_to_check object PIDs.
     $queue = DrupalQueue::get('validateIslandoraChecksums');
     $items_still_in_queue = $queue->numberOfItems();
     $objects_to_check = islandora_checksum_checker_get_objects($items_still_in_queue);
-    foreach($objects_to_check as $object) {
+    foreach ($objects_to_check as $object) {
       $queue->createItem($object);
     }
     islandora_checksum_checker_send_mismatch_notice();
@@ -115,8 +115,8 @@ function islandora_checksum_checker_admin_settings() {
 }
 
 /**
-* Implements hook_cron_queue_info().
-*/
+ * Implements hook_cron_queue_info().
+ */
 function islandora_checksum_checker_cron_queue_info() {
   $queues = array();
   $queues['validateIslandoraChecksums'] = array(
@@ -149,49 +149,52 @@ function islandora_checksum_checker_process_queue_item() {
 }
 
 /**
- * Performs the checksum validation. If checksums are not turned on,
+ * Performs the checksum validation.
+ * 
+ * If checksums are not turned on,
  * $ds_info = $connection->api->m->getDatastream($pid, $dsid,
  *   array('validateChecksum' => TRUE)); returns
- (
-    [dsLabel] => MODS Record
-    [dsVersionID] => MODS.14
-    [dsCreateDate] => 2013-12-16T16:53:13.250Z
-    [dsState] => A
-    [dsMIME] => text/xml
-    [dsFormatURI] =>
-    [dsControlGroup] => M
-    [dsSize] => 1692
-    [dsVersionable] => true
-    [dsInfoType] =>
-    [dsLocation] => islandora:1+MODS+MODS.14
-    [dsLocationType] => INTERNAL_ID
-    [dsChecksumType] => DISABLED
-    [dsChecksum] => none
-    [dsChecksumValid] => true
- )
- but if they are turned on, it returns
- (
-    [dsLabel] => MODS Record
-    [dsVersionID] => MODS.5
-    [dsCreateDate] => 2013-12-16T16:58:01.694Z
-    [dsState] => A
-    [dsMIME] => text/xml
-    [dsFormatURI] =>
-    [dsControlGroup] => M
-    [dsSize] => 1281
-    [dsVersionable] => true
-    [dsInfoType] =>
-    [dsLocation] => islandora:214+MODS+MODS.5
-    [dsLocationType] => INTERNAL_ID
-    [dsChecksumType] => SHA-1
-    [dsChecksum] => 3a1e474b16c669ba4a220b683585edb07c82af18
-    [dsChecksumValid] => true
- )
+ * (
+ *   [dsLabel] => MODS Record
+ *   [dsVersionID] => MODS.14
+ *   [dsCreateDate] => 2013-12-16T16:53:13.250Z
+ *   [dsState] => A
+ *   [dsMIME] => text/xml
+ *   [dsFormatURI] =>
+ *   [dsControlGroup] => M
+ *   [dsSize] => 1692
+ *   [dsVersionable] => true
+ *   [dsInfoType] =>
+ *   [dsLocation] => islandora:1+MODS+MODS.14
+ *   [dsLocationType] => INTERNAL_ID
+ *   [dsChecksumType] => DISABLED
+ *   [dsChecksum] => none
+ *   [dsChecksumValid] => true
+ * )
+ * but if they are turned on, it returns
+ * (
+ *   [dsLabel] => MODS Record
+ *   [dsVersionID] => MODS.5
+ *   [dsCreateDate] => 2013-12-16T16:58:01.694Z
+ *   [dsState] => A
+ *   [dsMIME] => text/xml
+ *   [dsFormatURI] =>
+ *   [dsControlGroup] => M
+ *   [dsSize] => 1281
+ *   [dsVersionable] => true
+ *   [dsInfoType] =>
+ *   [dsLocation] => islandora:214+MODS+MODS.5
+ *   [dsLocationType] => INTERNAL_ID
+ *   [dsChecksumType] => SHA-1
+ *   [dsChecksum] => 3a1e474b16c669ba4a220b683585edb07c82af18
+ *   [dsChecksumValid] => true
+ * )
  *
  * @param string $pid
- *  The PID as retrieved from the queue.
+ *   The PID as retrieved from the queue.
  *
  * @return bool
+ *   TRUE if the checksum validates, FALSE if it doesn't.
  */
 function islandora_checksum_checker_validate_checksum($pid) {
   variable_set('islandora_checksum_checker_mismatches', array());
@@ -203,13 +206,14 @@ function islandora_checksum_checker_validate_checksum($pid) {
   else {
     $datastreams_to_check = array();
   }
-  // Make sure there are no spaces around the DSIDs, so we can get a match in in_array().
+  // Make sure there are no spaces around the DSIDs, so we can get a
+  // match in in_array().
   foreach ($datastreams_to_check as &$dsid) {
     $dsid = trim($dsid);
   }
 
   $tuque = islandora_get_tuque_connection();
-  $islandora_object = islandora_object_load($pid); 
+  $islandora_object = islandora_object_load($pid);
 
   if (count($islandora_object)) {
     foreach ($islandora_object as $ds) {
@@ -219,8 +223,12 @@ function islandora_checksum_checker_validate_checksum($pid) {
         }
         catch (RepositoryException $e) {
           watchdog('islandora_checksum_checker', 'Checksums not verified for !object, !ds_id: !message',
-            array('!object' => $pid, '!ds_id' => $ds->id, '!message' => $e->getMessage()),
-              WATCHDOG_WARNING);
+            array(
+              '!object' => $pid,
+              '!ds_id' => $ds->id,
+              '!message' => $e->getMessage(),
+            ),
+            WATCHDOG_WARNING);
           return FALSE;
         }
         // Checksums are enabled.
@@ -232,12 +240,17 @@ function islandora_checksum_checker_validate_checksum($pid) {
           else {
             // We have an invalid checksum.
             $outcome = 'invalid';
-            $mismatches[] = array('pid' => $pid, 'ds_id' => $ds->id,
-              'checksum_type' => $ds_info['dsChecksumType']);
+            $mismatches[] = array(
+              'pid' => $pid, 'ds_id' => $ds->id,
+              'checksum_type' => $ds_info['dsChecksumType'],
+            );
             if (variable_get('islandora_checksum_checker_log_mismatches', 0)) {
               watchdog('islandora_checksum_checker', '@type checksum validation attempt on PID
-                @pid datastream @dsid returned false', array('@type' => $ds_info['dsChecksumType'],
-                '@pid' => $pid, '@dsid' => $ds->id), WATCHDOG_WARNING);
+                @pid datastream @dsid returned false', array(
+                  '@type' => $ds_info['dsChecksumType'],
+                  '@pid' => $pid,
+                  '@dsid' => $ds->id,
+                ), WATCHDOG_WARNING);
             }
           }
         }
@@ -246,28 +259,37 @@ function islandora_checksum_checker_validate_checksum($pid) {
           $outcome = 'disabled';
         }
         // Update the object ($log_message will appear in audit log).
-        $fixity_event_message = theme('premis_fixity_check', array('ds_location' => $ds_info['dsLocation'],
-          'ds_checksum_type' => $ds_info['dsChecksumType'], 'outcome' => $outcome));
+        $fixity_event_message = theme('premis_fixity_check', array(
+          'ds_location' => $ds_info['dsLocation'],
+          'ds_checksum_type' => $ds_info['dsChecksumType'],
+          'outcome' => $outcome)
+        );
         $log_message = array('logMessage' => trim($fixity_event_message));
         try {
           $tuque->api->m->modifyObject($pid, $log_message);
         }
         catch (RepositoryException $e) {
           watchdog('islandora_checksum_checker', 'Checksums not verified for !object, !ds_id: !message',
-            array('!object' => $pid, '!ds_id' => $ds->id, '!message' => $e->getMessage()),
-              WATCHDOG_WARNING);
+            array(
+              '!object' => $pid,
+              '!ds_id' => $ds->id,
+              '!message' => $e->getMessage(),
+            ),
+            WATCHDOG_WARNING);
           return FALSE;
         }
       }
     }
-    variable_set('islandora_checksum_checker_mismatches', $mismatches);           
+    variable_set('islandora_checksum_checker_mismatches', $mismatches);
   }
   return TRUE;
 }
 
 /**
- * Query the RI index to get PIDs of all objects that belong
- * to a collection but are not a collection object. Uses the system variable
+ * Query the RI index.
+ *
+ * Gets PIDs of all objects that belong to a collection but are not
+ * a collection object. Uses the system variable
  * 'islandora_checksum_checker_last_item_checked' to page through all
  * the objects in the repo.
  * 
@@ -276,6 +298,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
  *   releaseItem(), etc.).
  *
  * @return array
+ *   An array of PIDs.
  */
 function islandora_checksum_checker_get_objects($items_still_in_queue) {
   // Set up the limit and offset for the RI query.
@@ -287,9 +310,10 @@ function islandora_checksum_checker_get_objects($items_still_in_queue) {
   }
   $offset = variable_get('islandora_checksum_checker_last_item_checked', '0');
   // We need to add 1 to the offset so we can use it in the RI query, except
-  // the first time this function is invoked ('islandora_checksum_checker_last_item_checked'
-  // is set to 0 in the .install file) or when we have completed a validation
-  // cycle and reset $offset to 0 below.
+  // the first time this function is invoked
+  // ('islandora_checksum_checker_last_item_checked' is set to 0 in the
+  // .install file) or when we have completed a validation cycle and reset
+  // $offset to 0 below.
   if ($offset == '0') {
     $query_offset = '0';
   }
@@ -311,7 +335,7 @@ function islandora_checksum_checker_get_objects($items_still_in_queue) {
   $results = $tuque->repository->ri->itqlQuery($ri_query, 'unlimited');
 
   foreach ($results as $member) {
-      $objects_to_check[] = $member['object']['value'];
+    $objects_to_check[] = $member['object']['value'];
   }
 
   // If the number of results returned is fewer than $limit, assume
@@ -341,7 +365,7 @@ function islandora_checksum_checker_send_mismatch_notice() {
     variable_get('site_mail', 'admin@example.com'));
   $from = variable_get('site_mail', 'admin@example.com');
   $params = array();
-  
+
   // Mismatch entries are stored in a temporary system variable. However,
   // we don't clean it up at the end of the run in case the email doesn't
   // get sent.
@@ -386,11 +410,15 @@ function islandora_checksum_checker_mail($key, &$message, $params) {
       if (count($params['mismatches'])) {
         foreach ($params['mismatches'] as $mismatch) {
           $message['body'][] = t('@type checksum validation attempt on PID @pid datastream @dsid returned false',
-            array('@type' => $mismatch['checksum_type'], '@pid' => $mismatch['pid'],
-              '@dsid' => $mismatch['ds_id']), $options);
+            array(
+              '@type' => $mismatch['checksum_type'],
+              '@pid' => $mismatch['pid'],
+              '@dsid' => $mismatch['ds_id'],
+            ), $options);
         }
       }
       break;
+
     case 'all_objects_checked':
       $message['subject'] = t('Checksum validation complete for @site-name',
         array('@site-name' => variable_get('site_name', 'Drupal')), $options);

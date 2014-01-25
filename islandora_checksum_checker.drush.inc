@@ -63,7 +63,7 @@ function drush_islandora_checksum_checker_run_islandora_checksum_queue() {
   $queue = DrupalQueue::get('validateIslandoraChecksums');
   $items_still_in_queue = $queue->numberOfItems();
   $objects_to_check = islandora_checksum_checker_get_objects($items_still_in_queue);
-  foreach($objects_to_check as $object) {
+  foreach ($objects_to_check as $object) {
     $queue->createItem($object);
   }
 

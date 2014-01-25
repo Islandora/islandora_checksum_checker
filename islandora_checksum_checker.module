@@ -151,10 +151,9 @@ function islandora_checksum_checker_process_queue_item() {
 /**
  * Performs the checksum validation.
  * 
- * If checksums are not turned on,
- * $ds_info = $connection->api->m->getDatastream($pid, $dsid,
- *   array('validateChecksum' => TRUE)); returns
- * (
+ * If checksums are not turned on, $connection->api->m->getDatastream()
+ * returns the following array:
+ * 
  *   [dsLabel] => MODS Record
  *   [dsVersionID] => MODS.14
  *   [dsCreateDate] => 2013-12-16T16:53:13.250Z
@@ -170,9 +169,9 @@ function islandora_checksum_checker_process_queue_item() {
  *   [dsChecksumType] => DISABLED
  *   [dsChecksum] => none
  *   [dsChecksumValid] => true
- * )
+ *
  * but if they are turned on, it returns
- * (
+ *
  *   [dsLabel] => MODS Record
  *   [dsVersionID] => MODS.5
  *   [dsCreateDate] => 2013-12-16T16:58:01.694Z
@@ -188,7 +187,7 @@ function islandora_checksum_checker_process_queue_item() {
  *   [dsChecksumType] => SHA-1
  *   [dsChecksum] => 3a1e474b16c669ba4a220b683585edb07c82af18
  *   [dsChecksumValid] => true
- * )
+ *
  *
  * @param string $pid
  *   The PID as retrieved from the queue.

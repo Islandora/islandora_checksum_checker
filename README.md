@@ -2,7 +2,7 @@
 
 ## Build Status
 
-[![Build Status](https://travis-ci.org/mjordan/islandora_checksum_checker.png?branch=7.x)](https://travis-ci.org/mjordan/islandora_checksum_checker)
+[![Build Status](https://travis-ci.org/Islandora/islandora_checksum_checker.png?branch=7.x)](https://travis-ci.org/Islandora/islandora_checksum_checker)
 
 ## Summary
 

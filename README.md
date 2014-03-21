@@ -14,7 +14,9 @@ This module requires the following modules/libraries:
 
 * [Islandora](https://github.com/islandora/islandora)
 * [Tuque](https://github.com/islandora/tuque)
-* [Islandora Checksum](https://github.com/islandora/islandora_checksum) 
+* [Islandora Checksum](https://github.com/islandora/islandora_checksum) (Optional)
+
+This module is only useful if you use Fedora Commons to generate checksums on datastreams. The easiest way to have Fedora Commons generate checksums is to install and enable the Islandora Checksum module.
 
 ## Installation
 

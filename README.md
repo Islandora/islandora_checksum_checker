@@ -8,6 +8,8 @@ Islandora Checksum Checker needs to be periodically triggered using Drupal's cro
 
 With each run, the module performs checksum verification on a configurable list of object datastreams. When it has checked the datastreams of all objects (from oldest to newest), it will start from the beginning (i.e. with the oldest object in your repository) and repeat the verification cycle.
 
+## Requirements
+
 This module requires the following modules/libraries:
 
 * [Islandora](https://github.com/islandora/islandora)

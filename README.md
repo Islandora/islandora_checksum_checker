@@ -1,10 +1,6 @@
-# Islandora Checksum Checker
+# Islandora Checksum Checker [![Build Status](https://travis-ci.org/Islandora/islandora_checksum_checker.png?branch=7.x)](https://travis-ci.org/Islandora/islandora_checksum_checker)
 
-## Build Status
-
-[![Build Status](https://travis-ci.org/Islandora/islandora_checksum_checker.png?branch=7.x)](https://travis-ci.org/Islandora/islandora_checksum_checker)
-
-## Summary
+## Introduction
 
 This module verifies the checksums derived from Islandora object datastreams and adds a PREMIS 'fixity check' entry to the object's audit log for each datastream checked. Please note that adding this entry updates the object (specifically, it changes the object's lastModifiedDate).
 
@@ -12,15 +8,25 @@ Islandora Checksum Checker needs to be periodically triggered using Drupal's cro
 
 With each run, the module performs checksum verification on a configurable list of object datastreams. When it has checked the datastreams of all objects (from oldest to newest), it will start from the beginning (i.e. with the oldest object in your repository) and repeat the verification cycle.
 
-## Install
+## Requirements
 
-Same as any Drupal module. There are no prerequisites other than Islandora. 
+This module requires the following modules/libraries:
 
-However, this module is only useful if you use FedoraCommons to generate checksums on datastreams. The easiest way to have FedoraCommons generate checksums is to install and enable the [Islandora Checksum module](https://github.com/ruebot/islandora_checksum).
+* [Islandora](https://github.com/islandora/islandora)
+* [Tuque](https://github.com/islandora/tuque)
+* [Islandora Checksum](https://github.com/islandora/islandora_checksum) (Optional)
+
+This module is only useful if you use Fedora Commons to generate checksums on datastreams. The easiest way to have Fedora Commons generate checksums is to install and enable the Islandora Checksum module.
+
+## Installation
+
+Install as usual, see [this](https://drupal.org/documentation/install/modules-themes/modules-7) for further information.
 
 ## Configuration
 
-Visit the admin settings for this module at `admin/islandora/checksum_checker` to indicate the datastreams you want to have verified, whether you want to be notified when all Islandora objects have had their datastreams' checksums verified, and how you want to schedule the verification. 
+Set the cron method, number of objects to check per cron run, datastram to check, who to sent report to in Administration » Islandora » Checksum checker (admin/islandora/checksum_checker).
+
+![Configuration](http://i.imgur.com/sY6ov4A.png)
 
 The two most common options for scheduling the verification are:
 
@@ -38,7 +44,7 @@ The drush command you need to run is `drush run-islandora-checksum-queue`. You s
   0 * * * * /usr/bin/drush --root=/path/to/drupal --user=fedoraAdmin run-islandora-checksum-queue
 ```
 
-## Frequency of verification
+### Frequency of verification
 
 How often you should run this command will depend on several factors, including how many objects you have in your Islandora repository and how many days or months you will tolerate between reverification of the same object's datastream checksums.
 
@@ -48,10 +54,23 @@ Also, since the results of the verifcation are recorded in each object's audit l
 
 In addition, each time a datastream's checksum is verified, about twice as much data is written to your fedora.log as is stored in the object's audit log, so a more realistic estimate of how much disk space is consumed by routine checksum verification is three times the figures calculcated above.
 
-## Author/maintainer
+## Troubleshooting/Issues
 
-Mark Jordan mjordan at sfu dot ca
+Having problems or solved a problem? Check out the Islandora google groups for a solution.
+
+* [Islandora Group](https://groups.google.com/forum/?hl=en&fromgroups#!forum/islandora)
+* [Islandora Dev Group](https://groups.google.com/forum/?hl=en&fromgroups#!forum/islandora-dev)
+
+## Maintainers/Sponsors
+
+Current maintainers:
+
+* [Mark Jordan](https://github.com/mjordan)
+
+## Development
+
+If you would like to contribute to this module, please check out our helpful [Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers) info, as well as our [Developers](http://islandora.ca/developers) section on the Islandora.ca site.
 
 ## License
 
-Islandora Checksum Checker is released under the GNU GENERAL PUBLIC LICENSE, version 3. See LICENSE.txt for more information.
+[GPLv3](http://www.gnu.org/licenses/gpl-3.0.txt)

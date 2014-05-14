@@ -24,9 +24,9 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 ## Configuration
 
-Set the cron method, number of objects to check per cron run, datastream to check, who to sent report to in Administration » Islandora » Checksum checker (admin/islandora/checksum_checker).
+Set the cron method, number of objects to check per cron run, datastram to check, who to sent report to in Administration » Islandora » Islandora Utility Modules » Checksum checker (admin/islandora/tools/checksum_checker).
 
-![Configuration](http://i.imgur.com/sY6ov4A.png)
+![Configuration](https://camo.githubusercontent.com/c5e3d71e0ade7b3da4628d662017c5b6774e9ea8/687474703a2f2f692e696d6775722e636f6d2f7359366f7634412e706e67)
 
 The two most common options for scheduling the verification are:
 

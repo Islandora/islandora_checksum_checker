@@ -26,7 +26,7 @@ function islandora_checksum_checker_cron() {
  */
 function islandora_checksum_checker_menu() {
   $items = array();
-  $items['admin/islandora/checksum_checker'] = array(
+  $items['admin/islandora/tools/checksum_checker'] = array(
     'title' => 'Checksum checker',
     'description' => 'Configure the Islandora Checksum Checker.',
     'page callback' => 'drupal_get_form',

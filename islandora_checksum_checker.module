@@ -214,7 +214,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
   // Force the cron to run as user 1 so we don't get locked out of objects.
   $user = user_load(1);
   $tuque = islandora_get_tuque_connection($user);
-  $islandora_object = $tuque->getObject($pid);
+  $islandora_object = islandora_object_load($pid);
 
   if (count($islandora_object)) {
     foreach ($islandora_object as $ds) {

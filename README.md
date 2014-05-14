@@ -24,9 +24,9 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 ## Configuration
 
-Set the cron method, number of objects to check per cron run, datastream to check, who to sent report to in Administration » Islandora » Checksum checker (admin/islandora/checksum_checker).
+Set the cron method, number of objects to check per cron run, datastram to check, who to sent report to in Administration » Islandora » Islandora Utility Modules » Checksum checker (admin/islandora/tools/checksum_checker).
 
-![Configuration](http://i.imgur.com/sY6ov4A.png)
+![Configuration](https://camo.githubusercontent.com/c5e3d71e0ade7b3da4628d662017c5b6774e9ea8/687474703a2f2f692e696d6775722e636f6d2f7359366f7634412e706e67)
 
 The two most common options for scheduling the verification are:
 
@@ -50,9 +50,9 @@ How often you should run this command will depend on several factors, including 
 
 Assuming that you configure this module to check 50 objects every time it runs and that you have 10,000 objects in your Islandora repository, all objects will be checked every 8 days if you configure it to run every hour. If you configure this module to run every 6 hours, all objects will be checked every 50 days. 
 
-Also, since the results of the verification are recorded in each object's audit log, the more often you verify checksums, the larger the audit logs (and therefore the objects themselves) become. Each time a datastream is checked, the object's audit log grows by about 450 bytes. An object that has five datastreams that are all being checked will grow by about 4.5 kB/month if it is checked twice a month. A 10,000-object repository will use about 43 MB of disk every month just to store the results of routine checksum verification in the objects' audit logs.
+Also, since the results of the verifcation are recorded in each object's audit log, the more often you verify checksums, the larger the audit logs (and therefore the objects themselves) become. Each time a datastream is checked, the object's audit log grows by about 450 bytes. An object that has five datastreams that are all being checked will grow by about 4.5 kB/month if it is checked twice a month. A 10,000-object repository will use about 43 MB of disk every month just to store the results of routine checksum verification in the objects' audit logs.
 
-In addition, each time a datastream's checksum is verified, about twice as much data is written to your fedora.log as is stored in the object's audit log, so a more realistic estimate of how much disk space is consumed by routine checksum verification is three times the figures calculated above.
+In addition, each time a datastream's checksum is verified, about twice as much data is written to your fedora.log as is stored in the object's audit log, so a more realistic estimate of how much disk space is consumed by routine checksum verification is three times the figures calculcated above.
 
 ## Troubleshooting/Issues
 

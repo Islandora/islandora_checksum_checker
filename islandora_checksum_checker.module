@@ -26,7 +26,7 @@ function islandora_checksum_checker_cron() {
  */
 function islandora_checksum_checker_menu() {
   $items = array();
-  $items['admin/islandora/checksum_checker'] = array(
+  $items['admin/islandora/tools/checksum_checker'] = array(
     'title' => 'Checksum checker',
     'description' => 'Configure the Islandora Checksum Checker.',
     'page callback' => 'drupal_get_form',
@@ -214,13 +214,14 @@ function islandora_checksum_checker_validate_checksum($pid) {
   // Force the cron to run as user 1 so we don't get locked out of objects.
   $user = user_load(1);
   $tuque = islandora_get_tuque_connection($user);
-  $islandora_object = $tuque->getObject($pid);
+  $api_m = $tuque->api->m;
+  $islandora_object = islandora_object_load($pid);
 
   if (count($islandora_object)) {
     foreach ($islandora_object as $ds) {
       if (((count($datastreams_to_check)) === 0) || (in_array($ds->id, $datastreams_to_check))) {
         try {
-          $ds_info = $tuque->api->m->getDatastream($pid, $ds->id, array('validateChecksum' => TRUE));
+          $ds_info = $api_m->getDatastream($pid, $ds->id, array('validateChecksum' => TRUE));
         }
         catch (RepositoryException $e) {
           watchdog('islandora_checksum_checker', 'Checksums not verified for !object, !ds_id: !message',
@@ -267,7 +268,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
         );
         $log_message = array('logMessage' => trim($fixity_event_message));
         try {
-          $tuque->api->m->modifyObject($pid, $log_message);
+          $api_m->modifyObject($pid, $log_message);
         }
         catch (RepositoryException $e) {
           watchdog('islandora_checksum_checker', 'Checksums not verified for !object, !ds_id: !message',

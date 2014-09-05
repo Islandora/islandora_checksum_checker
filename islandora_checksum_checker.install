@@ -10,3 +10,10 @@
 function islandora_checksum_checker_install() {
   variable_set('islandora_checksum_checker_last_item_checked', '0');
 }
+
+/**
+ * Implements hook_uninstall().
+ */
+function islandora_checksum_checker_uninstall() {
+  array_walk($variables, 'variable_del');
+}

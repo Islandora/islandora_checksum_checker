@@ -325,7 +325,8 @@ function islandora_checksum_checker_get_objects($items_still_in_queue) {
   // Query the rindex to get all the objects that have a 'isMemberOfCollection'
   // relationship but that do not have a 'islandora:collectionCModel' content
   // model. Sort oldest to newest.
-  $tuque = islandora_get_tuque_connection();
+  $user = user_load(1);
+  $tuque = islandora_get_tuque_connection($user);
   $ri_query = 'select $object $created from <#ri>
     where  $object <fedora-rels-ext:isMemberOfCollection> $collection
     and $object <fedora-model:createdDate> $created

@@ -196,8 +196,7 @@ function islandora_checksum_checker_process_queue_item() {
  *   TRUE if the checksum validates, FALSE if it doesn't.
  */
 function islandora_checksum_checker_validate_checksum($pid) {
-  variable_set('islandora_checksum_checker_mismatches', array());
-  $mismatches = array();
+  $mismatches = variable_get('islandora_checksum_checker_mismatches', array());
   if (strlen(variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'))) {
     $datastreams_to_check = explode(',',
       variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'));
@@ -347,6 +346,7 @@ function islandora_checksum_checker_get_objects($items_still_in_queue) {
     $offset = 0;
     if (variable_get('islandora_checksum_checker_send_complete_message', 0)) {
       islandora_checksum_checker_send_check_complete_message();
+      variable_set('islandora_checksum_checker_mismatches', array());
     }
   }
   else {
@@ -415,7 +415,7 @@ function islandora_checksum_checker_mail($key, &$message, $params) {
             array(
               '@type' => $mismatch['checksum_type'],
               '@pid' => $mismatch['pid'],
-              '@dsid' => $mismatch['ds_id'],
+              '@dsid' => trim($mismatch['ds_id']),
             ), $options);
         }
       }

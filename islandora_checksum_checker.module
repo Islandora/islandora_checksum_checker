@@ -369,7 +369,7 @@ function islandora_checksum_checker_send_mismatch_notice() {
   $from = variable_get('site_mail', 'admin@example.com');
   $params = array();
 
-  // Mismatch entries are stored in a temporary system variable. 
+  // Mismatch entries are stored in a temporary system variable.
   $mismatches = variable_get('islandora_checksum_checker_mismatches', array());
   if (count($mismatches)) {
     $params['mismatches'] = $mismatches;

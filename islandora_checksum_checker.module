@@ -106,9 +106,10 @@ function islandora_checksum_checker_admin_settings() {
   $form['islandora_checksum_checker_log_mismatches'] = array(
     '#type' => 'checkbox',
     '#title' => t('Log checksum mismatches'),
-    '#default_value' => variable_get('islandora_checksum_checker_log_mismatches', 0),
+    '#default_value' => variable_get('islandora_checksum_checker_log_mismatches', 1),
     '#description' => t("Checksum mismatches are emailed to the address(es) in 'Send
-      report to', above. Check this option if you want mismatches to also be logged."),
+      report to', above. Check this option if you also want mismatches to be logged
+      (which is advisable in case the email messages fail to get sent)."),
   );
 
   return system_settings_form($form);
@@ -368,14 +369,14 @@ function islandora_checksum_checker_send_mismatch_notice() {
   $from = variable_get('site_mail', 'admin@example.com');
   $params = array();
 
-  // Mismatch entries are stored in a temporary system variable. However,
-  // we don't clean it up at the end of the run in case the email doesn't
-  // get sent.
+  // Mismatch entries are stored in a temporary system variable.
   $mismatches = variable_get('islandora_checksum_checker_mismatches', array());
   if (count($mismatches)) {
     $params['mismatches'] = $mismatches;
     $result = drupal_mail('islandora_checksum_checker', 'checksum_validation_failure',
       $to, $language, $params, $from, TRUE);
+    // Reset the list of mismatches so it's empty for the next run.
+    variable_set('islandora_checksum_checker_mismatches', array());
   }
   else {
     // Cancel the message.

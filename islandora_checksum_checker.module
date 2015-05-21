@@ -328,8 +328,7 @@ function islandora_checksum_checker_get_objects($items_still_in_queue) {
   $user = user_load(1);
   $tuque = islandora_get_tuque_connection($user);
   $ri_query = 'select $object $created from <#ri>
-    where  $object <fedora-rels-ext:isMemberOfCollection> $collection
-    and $object <fedora-model:createdDate> $created
+    where $object <fedora-model:createdDate> $created
     minus
     $object <fedora-model:hasModel> <info:fedora/islandora:collectionCModel>
     order by $created asc' .

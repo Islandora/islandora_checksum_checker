@@ -270,7 +270,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
           $tuque->api->m->modifyObject($pid, $log_message);
         }
         catch (RepositoryException $e) {
-          watchdog('islandora_checksum_checker', 'Checksums not verified for !object, !ds_id: !message',
+          watchdog('islandora_checksum_checker', 'Unable to add fixity event message for !object, !ds_id: !message',
             array(
               '!object' => $pid,
               '!ds_id' => $ds->id,

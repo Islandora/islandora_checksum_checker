@@ -135,17 +135,8 @@ function islandora_checksum_checker_process_queue_item() {
   // Get the next queue item.
   while ($item = $queue->claimItem()) {
     // $item->data will be an Islandora object's PID.
-    if (islandora_checksum_checker_validate_checksum($item->data)) {
-      // If success, remove the item from queue.
-      $queue->deleteItem($item);
-    }
-    else {
-      // Log failure to watchdog.
-      watchdog('islandora_checksum_checker', 'Checksums not verified for !object, will attempt again.',
-        array('!object' => $item->data), WATCHDOG_WARNING);
-      // Release, not delete the item so it remains in the queue.
-      $queue->releaseItem($item);
-    }
+    islandora_checksum_checker_validate_checksum($item->data);
+    $queue->deleteItem($item);
   }
 }
 

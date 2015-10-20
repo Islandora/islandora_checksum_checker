@@ -409,7 +409,7 @@ function islandora_checksum_checker_mail($key, &$message, $params) {
     case 'checksum_validation_failure':
       $message['subject'] = t('Checksum validation failure from @site-name',
         array('@site-name' => variable_get('site_name', 'Drupal')), $options);
-      if (count($params['mismatches'])) {
+      if (isset($params['mismatches']) && count($params['mismatches'])) {
         foreach ($params['mismatches'] as $mismatch) {
           $message['body'][] = t('@type checksum validation attempt on PID @pid datastream @dsid returned false',
             array(

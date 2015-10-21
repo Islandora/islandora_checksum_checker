@@ -204,6 +204,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
 
   // Force the cron to run as user 1 so we don't get locked out of objects.
   $user = user_load(1);
+  drupal_static_reset('islandora_get_tuque_connection');
   $tuque = islandora_get_tuque_connection($user);
   $islandora_object = islandora_object_load($pid);
 
@@ -317,6 +318,7 @@ function islandora_checksum_checker_get_objects($items_still_in_queue) {
   // relationship but that do not have a 'islandora:collectionCModel' content
   // model. Sort oldest to newest.
   $user = user_load(1);
+  drupal_static_reset('islandora_get_tuque_connection');
   $tuque = islandora_get_tuque_connection($user);
   $ri_query = 'select $object $created from <#ri>
     where $object <fedora-model:createdDate> $created

@@ -27,7 +27,7 @@ function islandora_checksum_checker_cron() {
 function islandora_checksum_checker_menu() {
   $items = array();
   $items['admin/islandora/tools/checksum_checker'] = array(
-    'title' => 'Checksum checker',
+    'title' => 'Checksum Checker',
     'description' => 'Configure the Islandora Checksum Checker.',
     'page callback' => 'drupal_get_form',
     'access arguments' => array('administer site configuration'),
@@ -135,17 +135,8 @@ function islandora_checksum_checker_process_queue_item() {
   // Get the next queue item.
   while ($item = $queue->claimItem()) {
     // $item->data will be an Islandora object's PID.
-    if (islandora_checksum_checker_validate_checksum($item->data)) {
-      // If success, remove the item from queue.
-      $queue->deleteItem($item);
-    }
-    else {
-      // Log failure to watchdog.
-      watchdog('islandora_checksum_checker', 'Checksums not verified for !object, will attempt again.',
-        array('!object' => $item->data), WATCHDOG_WARNING);
-      // Release, not delete the item so it remains in the queue.
-      $queue->releaseItem($item);
-    }
+    islandora_checksum_checker_validate_checksum($item->data);
+    $queue->deleteItem($item);
   }
 }
 
@@ -213,6 +204,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
 
   // Force the cron to run as user 1 so we don't get locked out of objects.
   $user = user_load(1);
+  drupal_static_reset('islandora_get_tuque_connection');
   $tuque = islandora_get_tuque_connection($user);
   $islandora_object = islandora_object_load($pid);
 
@@ -270,7 +262,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
           $tuque->api->m->modifyObject($pid, $log_message);
         }
         catch (RepositoryException $e) {
-          watchdog('islandora_checksum_checker', 'Checksums not verified for !object, !ds_id: !message',
+          watchdog('islandora_checksum_checker', 'Unable to add fixity event message for !object, !ds_id: !message',
             array(
               '!object' => $pid,
               '!ds_id' => $ds->id,
@@ -326,6 +318,7 @@ function islandora_checksum_checker_get_objects($items_still_in_queue) {
   // relationship but that do not have a 'islandora:collectionCModel' content
   // model. Sort oldest to newest.
   $user = user_load(1);
+  drupal_static_reset('islandora_get_tuque_connection');
   $tuque = islandora_get_tuque_connection($user);
   $ri_query = 'select $object $created from <#ri>
     where $object <fedora-model:createdDate> $created
@@ -409,7 +402,7 @@ function islandora_checksum_checker_mail($key, &$message, $params) {
     case 'checksum_validation_failure':
       $message['subject'] = t('Checksum validation failure from @site-name',
         array('@site-name' => variable_get('site_name', 'Drupal')), $options);
-      if (count($params['mismatches'])) {
+      if (isset($params['mismatches']) && count($params['mismatches'])) {
         foreach ($params['mismatches'] as $mismatch) {
           $message['body'][] = t('@type checksum validation attempt on PID @pid datastream @dsid returned false',
             array(

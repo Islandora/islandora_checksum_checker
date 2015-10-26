@@ -281,10 +281,9 @@ function islandora_checksum_checker_validate_checksum($pid) {
 /**
  * Query the RI index.
  *
- * Gets PIDs of all objects that belong to a collection but are not
- * a collection object. Uses the system variable
- * 'islandora_checksum_checker_last_item_checked' to page through all
- * the objects in the repo.
+ * Gets PIDs of all objects that are not collection objects. Uses the
+ * system variable 'islandora_checksum_checker_last_item_checked' to page
+ * through all the objects in the repo.
  *
  * @param string $items_still_in_queue
  *   The number of items left in the queue from last cron run (due to
@@ -320,13 +319,22 @@ function islandora_checksum_checker_get_objects($items_still_in_queue) {
   $user = user_load(1);
   drupal_static_reset('islandora_get_tuque_connection');
   $tuque = islandora_get_tuque_connection($user);
-  $ri_query = 'select $object $created from <#ri>
-    where $object <fedora-model:createdDate> $created
-    minus
-    $object <fedora-model:hasModel> <info:fedora/islandora:collectionCModel>
-    order by $created asc' .
-    "\nlimit $limit offset " . (string) $query_offset;
-  $results = $tuque->repository->ri->itqlQuery($ri_query, 'unlimited');
+  $ri_query = <<<EOQ
+SELECT ?object ?created
+FROM <#ri>
+WHERE {
+  ?object <fedora-model:createdDate> ?created .
+  OPTIONAL {
+    ?object <fedora-model:hasModel> <info:fedora/islandora:collectionCModel> ;
+            <fedora-view:lastModifiedDate> ?probe
+  }
+  FILTER(!bound(?probe))
+}
+ORDER BY ?created
+LIMIT $limit
+OFFSET $query_offset
+EOQ;
+  $results = $tuque->repository->ri->sparqlQuery($ri_query, 'unlimited');
 
   foreach ($results as $member) {
     $objects_to_check[] = $member['object']['value'];

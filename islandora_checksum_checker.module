@@ -289,10 +289,9 @@ function islandora_checksum_checker_validate_checksum($pid) {
 /**
  * Query the RI index.
  *
- * Gets PIDs of all objects that belong to a collection but are not
- * a collection object. Uses the system variable
- * 'islandora_checksum_checker_last_item_checked' to page through all
- * the objects in the repo.
+ * Gets PIDs of all objects that are not collection objects. Uses the
+ * system variable 'islandora_checksum_checker_last_item_checked' to page
+ * through all the objects in the repo.
  *
  * @param string $items_still_in_queue
  *   The number of items left in the queue from last cron run (due to

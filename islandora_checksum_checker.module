@@ -128,15 +128,16 @@ function islandora_checksum_checker_cron_queue_info() {
 }
 
 /**
- * Queue worker callback. Processes one queue item.
+ * Queue worker callback.
+ *
+ * @param string $pid
+ *   The PID as retrieved from the queue.
  */
-function islandora_checksum_checker_process_queue_item() {
-  $queue = DrupalQueue::get('validateIslandoraChecksums');
-  // Get the next queue item.
-  while ($item = $queue->claimItem()) {
-    // $item->data will be an Islandora object's PID.
-    islandora_checksum_checker_validate_checksum($item->data);
-    $queue->deleteItem($item);
+function islandora_checksum_checker_process_queue_item($pid) {
+  if (!islandora_checksum_checker_validate_checksum($pid)) {
+    // Log failure to watchdog.
+    watchdog('islandora_checksum_checker', 'Checksums not verified for !object, will attempt again.',
+      array('!object' => $item->data), WATCHDOG_WARNING);
   }
 }
 

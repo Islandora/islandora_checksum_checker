@@ -181,7 +181,6 @@ function islandora_checksum_checker_process_queue_item($pid) {
  *   [dsChecksum] => 3a1e474b16c669ba4a220b683585edb07c82af18
  *   [dsChecksumValid] => true
  *
- *
  * @param string $pid
  *   The PID as retrieved from the queue.
  *
@@ -235,7 +234,8 @@ function islandora_checksum_checker_validate_checksum($pid) {
             // We have an invalid checksum.
             $outcome = 'invalid';
             $mismatches[] = array(
-              'pid' => $pid, 'ds_id' => $ds->id,
+              'pid' => $pid,
+              'ds_id' => $ds->id,
               'checksum_type' => $ds_info['dsChecksumType'],
             );
             if (variable_get('islandora_checksum_checker_log_mismatches', 0)) {

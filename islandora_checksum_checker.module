@@ -13,7 +13,16 @@ function islandora_checksum_checker_cron() {
     // Populate the queue with the next $objects_to_check object PIDs.
     $queue = DrupalQueue::get('validateIslandoraChecksums');
     $items_still_in_queue = $queue->numberOfItems();
-    $objects_to_check = islandora_checksum_checker_get_objects($items_still_in_queue);
+    $limit = variable_get('islandora_checksum_checker_items_per_cron', '50');
+
+    // Adjust $limit for items left in queue. If $items_still_in_queue
+    // is greater than or equal to $limit, use the configured value for $limit.
+    if ($limit > $items_still_in_queue) {
+      $limit = (int) $limit - (int) $items_still_in_queue;
+    }
+
+    $objects_to_check = islandora_checksum_checker_get_objects($limit);
+
     foreach ($objects_to_check as $object) {
       $queue->createItem($object);
     }
@@ -285,21 +294,13 @@ function islandora_checksum_checker_validate_checksum($pid) {
  * system variable 'islandora_checksum_checker_last_item_checked' to page
  * through all the objects in the repo.
  *
- * @param string $items_still_in_queue
- *   The number of items left in the queue from last cron run (due to
- *   releaseItem(), etc.).
+ * @param int $limit
+ *   The number of items to add to the queue.
  *
  * @return array
  *   An array of PIDs.
  */
-function islandora_checksum_checker_get_objects($items_still_in_queue) {
-  // Set up the limit and offset for the RI query.
-  $limit = variable_get('islandora_checksum_checker_items_per_cron', '50');
-  // Adjust $limit to account for items left in queue. If $items_still_in_queue
-  // is greater than or equal to $limit, use the configured value for $limit.
-  if ($limit > $items_still_in_queue) {
-    $limit = (int) $limit - (int) $items_still_in_queue;
-  }
+function islandora_checksum_checker_get_objects($limit) {
   $offset = variable_get('islandora_checksum_checker_last_item_checked', '0');
   // We need to add 1 to the offset so we can use it in the RI query, except
   // the first time this function is invoked
@@ -357,6 +358,37 @@ EOQ;
   variable_set('islandora_checksum_checker_last_item_checked', $offset);
 
   return $objects_to_check;
+}
+
+/**
+ * Query the RI index for a count.
+ *
+ * Gets the number of items that the checksum checker will run against.
+ *
+ * @return int
+ *   Count of pids.
+ */
+function islandora_checksum_checker_get_number_objects() {
+  $user = user_load(1);
+  drupal_static_reset('islandora_get_tuque_connection');
+  $tuque = islandora_get_tuque_connection($user);
+
+  // Query the rindex to get all the objects that have a 'isMemberOfCollection'
+  // relationship but that do not have a 'islandora:collectionCModel' content
+  // model. Sort oldest to newest.
+  $ri_query = <<<EOQ
+SELECT ?object ?created
+FROM <#ri>
+WHERE {
+  ?object <fedora-model:createdDate> ?created .
+  OPTIONAL {
+    ?object <fedora-model:hasModel> <info:fedora/islandora:collectionCModel> ;
+            <fedora-view:lastModifiedDate> ?probe
+  }
+  FILTER(!bound(?probe))
+}
+EOQ;
+  return $tuque->repository->ri->countQuery($ri_query, 'sparql');
 }
 
 /**

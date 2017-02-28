@@ -32,7 +32,10 @@
 function islandora_checksum_checker_drush_help($command) {
   switch ($command) {
     case 'drush:run-islandora-checksum-queue':
-      return dt('Populate and process items in the Islandora checksum validation queue.');
+      return dt('Populate and process items in the Islandora checksum validation queue. ' .
+        'Processes the number of items specified in the module admin page, unless the ' .
+        'days-to-complete and cmd-run-frequency optional parameters are passed in. If the optional ' .
+        'parameters are passed in then the command will attempt to process the correct number of items.');
   }
 }
 
@@ -46,25 +49,75 @@ function islandora_checksum_checker_drush_command() {
     'examples' => array(
       'Standard example' => 'drush --user=fedoraAdmin run-islandora-checksum-queue',
       'Alias example' => 'drush --user=fedoraAdmin ricq',
+      'Options example' => 'drush --user=fedoraAdmin --days-to-complete=180 --cmd-run-frequency=12 run-islandora-checksum-queue',
     ),
     'aliases' => array('ricq'),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
+    'options' => array(
+      'days-to-complete' => array(
+        'description' => 'The number of days it should take to check all the checksums.',
+        'example-value' => 365,
+        'value' => required,
+      ),
+      'cmd-run-frequency' => array(
+        'description' => 'The number of hours between checksum runs (required if --days-to-complete is set).',
+        'example-value' => 12,
+        'value' => required,
+      ),
+    ),
   );
   return $items;
+}
+
+/**
+ * Validation function for drush run-islandora-checksum-queue.
+ */
+function drush_islandora_checksum_checker_run_islandora_checksum_queue_validate() {
+  if (variable_get('islandora_checksum_checker_queue_cron_method', 'drupal') != 'drush') {
+    return drush_set_error('CHECKSUM_CHECKER_NOT_ENABLED', dt('Please enable the drush method in the module config.'));
+  }
+
+  $days = drush_get_option('days-to-complete');
+  $hours = drush_get_option('cmd-run-frequency');
+
+  if ($days != NULL && (!is_numeric($days) || intval($days) != $days || $days <= 0)) {
+    return drush_set_error('CHECKSUM_CHECKER_DAYS', dt('The option --days-to-complete must be a positive integer.'));
+  }
+
+  if ($hours != NULL && (!is_numeric($hours) || intval($hours) != $hours || $hours <= 0)) {
+    return drush_set_error('CHECKSUM_CHECKER_DAYS', dt('The option --cmd-run-frequency must be a positive integer.'));
+  }
+
+  if ($hours == NULL XOR $days == NULL) {
+    return drush_set_error('CHECKSUM_CHECKER_OPTIONS', dt('Both --days-to-complete and --cmd-run-frequency must be specified, or neither specified.'));
+  }
 }
 
 /**
  * Callback function for drush run-islandora-checksum-queue.
  */
 function drush_islandora_checksum_checker_run_islandora_checksum_queue() {
-  if (variable_get('islandora_checksum_checker_queue_cron_method', 'drupal') != 'drush') {
-    return;
-  }
+  $days = drush_get_option('days-to-complete');
+  $hours = drush_get_option('cmd-run-frequency');
+  $time_based_items = $days AND $hours;
 
   // Populate the queue with the next $objects_to_check object PIDs.
   $queue = DrupalQueue::get('validateIslandoraChecksums');
   $items_still_in_queue = $queue->numberOfItems();
-  $objects_to_check = islandora_checksum_checker_get_objects($items_still_in_queue);
+
+  if ($time_based_items) {
+    $repository_items = islandora_checksum_checker_get_number_objects();
+    $limit = ceil(($repository_items / $days) * ($hours / 24));
+  }
+  else {
+    $limit = variable_get('islandora_checksum_checker_items_per_cron', '50');
+    if ($limit > $items_still_in_queue) {
+      $limit = (int) $limit - (int) $items_still_in_queue;
+    }
+  }
+
+  $objects_to_check = islandora_checksum_checker_get_objects($limit);
+
   foreach ($objects_to_check as $object) {
     $queue->createItem($object);
   }

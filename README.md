@@ -54,6 +54,12 @@ Also, since the results of the verification are recorded in each object's audit 
 
 In addition, each time a datastream's checksum is verified, about twice as much data is written to your fedora.log as is stored in the object's audit log, so a more realistic estimate of how much disk space is consumed by routine checksum verification is three times the figures calculated above.
 
+Checksum Checker provides two optional drush options that will calculate the number of objects to check per cron run. They are:  
+* `--days-to-complete`: The number of days it should take to verify the checksums of all objects.
+* `--cmd-run-frequency`: The number of hours between checksum runs (required if --days-to-complete is set). Note that this value (1 for each hour, 2 for every 2 hours, etc.) should correspond to the frequency configured in your server's crontab for running the drush command.
+
+Using these two values, and the number of objects in your repository (which you do not need to provide), Checksum Checker will calculate the number of objects to check each cron run.
+
 ## Documentation
 
 Further documentation for this module is available at [our wiki](https://wiki.duraspace.org/display/ISLANDORA/Islandora+Checksum+Checker).

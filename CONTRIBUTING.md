@@ -114,7 +114,7 @@ Community members who have push/merge permissions on a repository should **never
 The pull request process will roughly look like this:
 
 1. fork from Islandora repo if that has not already been done
-2. `git remote add islandora git@github.com:Islandora/islandora_checksum.git`
+2. `git remote add islandora git@github.com:Islandora/islandora_checksum_checker.git`
 3. `git pull islandora 7.x`
 4. Make changes, commit
 5. `git push origin 7.x` and issue a pull request on 7.x

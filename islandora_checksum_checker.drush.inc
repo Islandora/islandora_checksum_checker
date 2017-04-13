@@ -57,12 +57,12 @@ function islandora_checksum_checker_drush_command() {
       'days-to-complete' => array(
         'description' => 'The number of days it should take to check all the checksums.',
         'example-value' => 365,
-        'value' => required,
+        'value' => 'required',
       ),
       'cmd-run-frequency' => array(
         'description' => 'The number of hours between checksum runs (required if --days-to-complete is set).',
         'example-value' => 12,
-        'value' => required,
+        'value' => 'required',
       ),
     ),
   );

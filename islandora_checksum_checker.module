@@ -220,6 +220,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
   if (count($islandora_object)) {
     foreach ($islandora_object as $ds) {
       if (((count($datastreams_to_check)) === 0) || (in_array($ds->id, $datastreams_to_check))) {
+        $exceptions = array();
         try {
           $ds_info = $tuque->api->m->getDatastream($pid, $ds->id, array('validateChecksum' => TRUE));
         }
@@ -231,6 +232,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
               '!message' => $e->getMessage(),
             ),
             WATCHDOG_WARNING);
+          $exceptions[] = $e;
           return FALSE;
         }
         // Checksums are enabled.
@@ -278,8 +280,12 @@ function islandora_checksum_checker_validate_checksum($pid) {
               '!message' => $e->getMessage(),
             ),
             WATCHDOG_WARNING);
+          $exceptions[] = $e;
           return FALSE;
         }
+
+        module_invoke_all('islandora_checksum_checker_outcome', $pid, $ds->id, $ds_info, $outcome, $exceptions);
+
       }
     }
     variable_set('islandora_checksum_checker_mismatches', $mismatches);

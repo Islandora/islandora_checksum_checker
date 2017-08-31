@@ -18,7 +18,7 @@
  * @param string $outcome
  *   One of 'valid', 'invalid', or 'disabled'.
  * @param array $exceptions
- *   An array of all exceptions caught during the validation. Exceptions
+ *   An array of all exception objects caught during the validation. Exceptions
  *   will already be logged to the watchdog.
  */
 function hook_islandora_checksum_checker_outcome($pid, $dsid, $ds_info, $outcome, $exceptions) {

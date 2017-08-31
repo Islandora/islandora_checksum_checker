@@ -233,6 +233,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
             ),
             WATCHDOG_WARNING);
           $exceptions[] = $e;
+          module_invoke_all('islandora_checksum_checker_outcome', $pid, $ds->id, array(), '', $exceptions);
           return FALSE;
         }
         // Checksums are enabled.
@@ -281,6 +282,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
             ),
             WATCHDOG_WARNING);
           $exceptions[] = $e;
+          module_invoke_all('islandora_checksum_checker_outcome', $pid, $ds->id, array(), '', $exceptions);
           return FALSE;
         }
 

@@ -12,11 +12,13 @@
  * @param string $dsid
  *   The current datastream's DSID.
  * @param array $ds_info
- *   Output of Tuque's APIM getDatastream() method, with 'validateChecksum'
+ *   Output of Tuque's API-M getDatastream() method, with 'validateChecksum'
  *   set to TRUE. See islandora_checksum_checker_validate_checksum() for
- *   details on the content of this array.
+ *   details on the content of this array. Will be empty if an exception was
+ *   caught.
  * @param string $outcome
- *   One of 'valid', 'invalid', or 'disabled'.
+ *   One of 'valid', 'invalid', or 'disabled'. Will be empty if an exception
+ *   was caught.
  * @param array $exceptions
  *   An array of all exception objects caught during the validation. Exceptions
  *   will already be logged to the watchdog.

@@ -10,7 +10,8 @@
  * @param string $pid
  *   The current object's PID.
  * @param string $dsid
- *   The current datastream's DSID.
+ *   The current datastream's DSID. Will be empty if the exception is thrown
+ *   from the initial Tuque connection (i.e., there is no current datastream).
  * @param array $ds_info
  *   Output of Tuque's API-M getDatastream() method, with 'validateChecksum'
  *   set to TRUE. See islandora_checksum_checker_validate_checksum() for

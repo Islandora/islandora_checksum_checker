@@ -198,6 +198,7 @@ function islandora_checksum_checker_process_queue_item() {
  */
 function islandora_checksum_checker_validate_checksum($pid) {
   $mismatches = variable_get('islandora_checksum_checker_mismatches', array());
+  $exceptions = array();
   if (strlen(variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'))) {
     $datastreams_to_check = explode(',',
       variable_get('islandora_checksum_checker_dsids_to_check', 'OBJ'));
@@ -213,10 +214,22 @@ function islandora_checksum_checker_validate_checksum($pid) {
 
   // Force the cron to run as user 1 so we don't get locked out of objects.
   $user = user_load(1);
-  drupal_static_reset('islandora_get_tuque_connection');
-  $tuque = islandora_get_tuque_connection($user);
-  $islandora_object = islandora_object_load($pid);
 
+  drupal_static_reset('islandora_get_tuque_connection');
+  try {
+    if (!$tuque = islandora_get_tuque_connection($user)) {
+      $error = 'Tuque connection failed.';
+      throw new Exception($error);
+    }
+  }
+  catch (Exception $e) {
+    $exceptions[] = $e;
+    // Only invoke the hook on failure.
+    module_invoke_all('islandora_checksum_checker_outcome', $pid, '', array(), '', $exceptions);
+    return FALSE;
+  }
+
+  $islandora_object = islandora_object_load($pid);
   if (count($islandora_object)) {
     foreach ($islandora_object as $ds) {
       if (((count($datastreams_to_check)) === 0) || (in_array($ds->id, $datastreams_to_check))) {
@@ -231,6 +244,8 @@ function islandora_checksum_checker_validate_checksum($pid) {
               '!message' => $e->getMessage(),
             ),
             WATCHDOG_WARNING);
+          $exceptions[] = $e;
+          module_invoke_all('islandora_checksum_checker_outcome', $pid, $ds->id, array(), '', $exceptions);
           return FALSE;
         }
         // Checksums are enabled.
@@ -278,8 +293,13 @@ function islandora_checksum_checker_validate_checksum($pid) {
               '!message' => $e->getMessage(),
             ),
             WATCHDOG_WARNING);
+          $exceptions[] = $e;
+          module_invoke_all('islandora_checksum_checker_outcome', $pid, $ds->id, array(), '', $exceptions);
           return FALSE;
         }
+
+        module_invoke_all('islandora_checksum_checker_outcome', $pid, $ds->id, $ds_info, $outcome, $exceptions);
+
       }
     }
     variable_set('islandora_checksum_checker_mismatches', $mismatches);

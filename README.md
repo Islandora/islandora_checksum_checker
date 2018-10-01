@@ -75,7 +75,7 @@ Having problems or solved a problem? Check out the Islandora google groups for a
 
 Current maintainers:
 
-* [Jonathan Green](https://github.com/jonathangreen)
+* [Daniel Aitken](https://github.com/qadan)
 
 ## Development
 

@@ -11,7 +11,7 @@
 function islandora_checksum_checker_cron() {
   if (variable_get('islandora_checksum_checker_queue_cron_method', 'drupal') == 'drupal') {
     // Populate the queue with the next $objects_to_check object PIDs.
-    $queue = DrupalQueue::get('validateIslandoraChecksums');
+    $queue = DrupalQueue::get('validateIslandoraChecksums', TRUE);
     $items_still_in_queue = $queue->numberOfItems();
     $limit = variable_get('islandora_checksum_checker_items_per_cron', '50');
 
@@ -147,7 +147,7 @@ function islandora_checksum_checker_cron_queue_info() {
  * Queue worker callback. Processes one queue item.
  */
 function islandora_checksum_checker_process_queue_item() {
-  $queue = DrupalQueue::get('validateIslandoraChecksums');
+  $queue = DrupalQueue::get('validateIslandoraChecksums', TRUE);
   // Get the next queue item.
   while ($item = $queue->claimItem()) {
     // $item->data will be an Islandora object's PID.

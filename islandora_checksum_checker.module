@@ -128,10 +128,17 @@ function islandora_checksum_checker_admin_settings() {
  * Implements hook_cron_queue_info().
  */
 function islandora_checksum_checker_cron_queue_info() {
+  // Only process the queue via cron if the module is configured to do so.
+  $cron_method = variable_get(
+    'islandora_checksum_checker_queue_cron_method',
+    'drupal'
+  );
+
   $queues = array();
   $queues['validateIslandoraChecksums'] = array(
     'worker callback' => 'islandora_checksum_checker_process_queue_item',
     'time' => 60,
+    'skip on cron' => $cron_method != 'drupal',
   );
   return $queues;
 }

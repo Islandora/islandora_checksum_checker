@@ -134,6 +134,10 @@ function islandora_checksum_checker_cron_queue_info() {
     'drupal'
   );
 
+  // Get the queue first here to ensure DrupalQueue::get() saves a reliable
+  // queue to its static cache.
+  $queue = DrupalQueue::get('validateIslandoraChecksums', TRUE);
+
   $queues = array();
   $queues['validateIslandoraChecksums'] = array(
     'worker callback' => 'islandora_checksum_checker_process_queue_item',

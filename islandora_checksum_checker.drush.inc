@@ -102,7 +102,7 @@ function drush_islandora_checksum_checker_run_islandora_checksum_queue() {
   $time_based_items = $days AND $hours;
 
   // Populate the queue with the next $objects_to_check object PIDs.
-  $queue = DrupalQueue::get('validateIslandoraChecksums');
+  $queue = DrupalQueue::get('validateIslandoraChecksums', TRUE);
   $items_still_in_queue = $queue->numberOfItems();
 
   if ($time_based_items) {

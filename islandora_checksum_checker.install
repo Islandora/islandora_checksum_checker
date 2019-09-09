@@ -22,6 +22,9 @@ function islandora_checksum_checker_uninstall() {
     'islandora_checksum_checker_email_reports_to',
     'islandora_checksum_checker_send_complete_message',
     'islandora_checksum_checker_log_mismatches',
+    'islandora_checksum_checker_use_solr',
+    'islandora_checksum_checker_solr_created',
+    'islandora_checksum_checker_solr_model',
   );
   array_walk($variables, 'variable_del');
 }

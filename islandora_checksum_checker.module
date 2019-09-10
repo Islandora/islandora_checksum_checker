@@ -135,7 +135,7 @@ function islandora_checksum_checker_admin_settings() {
     '#type' => 'container',
     '#states' => array(
       'visible' => array(
-        ':input[name="islandora_checksum_checker_use_solr"]' => array('checked' => true),
+        ':input[name="islandora_checksum_checker_use_solr"]' => array('checked' => TRUE),
       ),
     ),
     'islandora_checksum_checker_solr_created' => array(

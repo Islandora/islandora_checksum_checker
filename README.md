@@ -15,6 +15,7 @@ This module requires the following modules/libraries:
 * [Islandora](https://github.com/islandora/islandora)
 * [Tuque](https://github.com/islandora/tuque)
 * [Islandora Checksum](https://github.com/islandora/islandora_checksum) (Optional)
+* [Islandora Solr](https://github.com/islandora/islandora_solr_search) (Optional)
 
 This module is only useful if you use Fedora Commons to generate checksums on datastreams. The easiest way to have Fedora Commons generate checksums is to install and enable the Islandora Checksum module.
 
@@ -26,7 +27,7 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 Set the cron method, number of objects to check per cron run, datastram to check, who to sent report to in Administration » Islandora » Islandora Utility Modules » Checksum checker (admin/islandora/tools/checksum_checker).
 
-![Configuration](https://camo.githubusercontent.com/c5e3d71e0ade7b3da4628d662017c5b6774e9ea8/687474703a2f2f692e696d6775722e636f6d2f7359366f7634412e706e67)
+![Configuration](https://user-images.githubusercontent.com/2857697/64626515-8d9d1700-d3b3-11e9-9859-eb68417b57e8.png)
 
 The two most common options for scheduling the verification are:
 
@@ -43,6 +44,17 @@ The drush command you need to run is `drush run-islandora-checksum-queue`. You s
 ```
   0 * * * * /usr/bin/drush --root=/path/to/drupal --user=fedoraAdmin run-islandora-checksum-queue
 ```
+
+### Solr backend
+
+By default the checksum checker creates a list of all PIDs that don't have the `islandora:collectionCModel` from your Resource Index (Triplestore).
+
+You can use Solr (if you have Islandora Solr installed/enabled) by choosing the "Use Solr for finding objects" option. 
+
+Checking this option will reveal two additional text fields to enter the names of fields which hold:
+1. A created date for the object (this **must** be a non-multi-valued field)
+1. A content model for the object.
+
 
 ### Frequency of verification
 

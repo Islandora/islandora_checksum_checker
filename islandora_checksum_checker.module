@@ -141,7 +141,7 @@ function islandora_checksum_checker_admin_settings() {
     'islandora_checksum_checker_solr_created' => array(
       '#type' => 'textfield',
       '#title' => t('Solr created date field'),
-      '#description' => t("Solr field containing your object's creation date. Defaults to fgs_createdDate_dt"),
+      '#description' => t("Solr field containing your object's creation date. This must be a single valued field so we can sort on it. Defaults to fgs_createdDate_dt"),
       '#default_value' => variable_get('islandora_checksum_checker_solr_created', 'fgs_createdDate_dt'),
       '#autocomplete_path' => 'islandora_solr/autocomplete_luke',
     ),
@@ -166,6 +166,14 @@ function islandora_checksum_checker_admin_settings_validate(array $form, array &
     if (!isset($form_state['values']['islandora_checksum_checker_solr_created']) ||
       empty($form_state['values']['islandora_checksum_checker_solr_created'])) {
       form_set_error('islandora_checksum_checker_solr_created', t('Must provide a date created Solr field.'));
+    }
+    else {
+      module_load_include('inc', 'islandora_solr', 'includes/luke');
+      $info = islandora_solr_get_field_schema($form_state['values']['islandora_checksum_checker_solr_created']);
+      if (isset($info['multivalued']) && $info['multivalued'] === True) {
+        form_set_error('islandora_checksum_checker_solr_created',
+          t('Created date field needs to be non-multi-valued field to allow sorting.'));
+      }
     }
     if (!isset($form_state['values']['islandora_checksum_checker_solr_model']) ||
       empty($form_state['values']['islandora_checksum_checker_solr_model'])) {
@@ -490,6 +498,7 @@ function islandora_checksum_checker_get_objects_solr($limit) {
     'fl' => "PID,{$created_field}",
     'rows' => $limit,
     'start' => $offset,
+    'sort' => "{$created_field}+ASC",
   );
   $solr_query = format_string("-!model_field:(\"info:fedora/islandora:collectionCModel\" OR \"islandora:collectionCModel\")",
     array(

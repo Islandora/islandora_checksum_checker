@@ -170,7 +170,7 @@ function islandora_checksum_checker_admin_settings_validate(array $form, array &
     else {
       module_load_include('inc', 'islandora_solr', 'includes/luke');
       $info = islandora_solr_get_field_schema($form_state['values']['islandora_checksum_checker_solr_created']);
-      if (isset($info['multivalued']) && $info['multivalued'] === True) {
+      if (isset($info['multivalued']) && $info['multivalued'] === TRUE) {
         form_set_error('islandora_checksum_checker_solr_created',
           t('Created date field needs to be non-multi-valued field to allow sorting.'));
       }

@@ -120,8 +120,66 @@ function islandora_checksum_checker_admin_settings() {
       report to', above. Check this option if you also want mismatches to be logged
       (which is advisable in case the email messages fail to get sent)."),
   );
+  $form['islandora_checksum_checker_use_solr'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use Solr for finding objects'),
+    '#disabled' => (!module_exists('islandora_solr')),
+    '#default_value' => (module_exists('islandora_solr') ?
+      variable_get('islandora_checksum_checker_use_solr', FALSE) :
+      FALSE),
+    '#description' => t('Checksum checker uses your resource index to locate all the 
+      non-collection objects to run against. Checking this option allows you to
+      use Solr instead. Requires Islandora Solr module.'),
+  );
+  $form['checksum_solr_field'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="islandora_checksum_checker_use_solr"]' => array('checked' => TRUE),
+      ),
+    ),
+    'islandora_checksum_checker_solr_created' => array(
+      '#type' => 'textfield',
+      '#title' => t('Solr created date field'),
+      '#description' => t("Solr field containing your object's creation date. This must be a single valued field so we can sort on it. Defaults to fgs_createdDate_dt"),
+      '#default_value' => variable_get('islandora_checksum_checker_solr_created', 'fgs_createdDate_dt'),
+      '#autocomplete_path' => 'islandora_solr/autocomplete_luke',
+    ),
+    'islandora_checksum_checker_solr_model' => array(
+      '#type' => 'textfield',
+      '#title' => t('Solr content model field'),
+      '#description' => t("Solr field containing your object's content model. Defaults to RELS_EXT_hasModel_uri_ms"),
+      '#default_value' => variable_get('islandora_checksum_checker_solr_model', 'RELS_EXT_hasModel_uri_ms'),
+      '#autocomplete_path' => 'islandora_solr/autocomplete_luke',
+    ),
+  );
 
   return system_settings_form($form);
+}
+
+/**
+ * Implements hook_form_validate
+ */
+function islandora_checksum_checker_admin_settings_validate(array $form, array &$form_state) {
+  if (isset($form_state['values']['islandora_checksum_checker_use_solr']) &&
+    (bool) $form_state['values']['islandora_checksum_checker_use_solr']) {
+    if (!isset($form_state['values']['islandora_checksum_checker_solr_created']) ||
+      empty($form_state['values']['islandora_checksum_checker_solr_created'])) {
+      form_set_error('islandora_checksum_checker_solr_created', t('Must provide a date created Solr field.'));
+    }
+    else {
+      module_load_include('inc', 'islandora_solr', 'includes/luke');
+      $info = islandora_solr_get_field_schema($form_state['values']['islandora_checksum_checker_solr_created']);
+      if (isset($info['multivalued']) && $info['multivalued'] === TRUE) {
+        form_set_error('islandora_checksum_checker_solr_created',
+          t('Created date field needs to be non-multi-valued field to allow sorting.'));
+      }
+    }
+    if (!isset($form_state['values']['islandora_checksum_checker_solr_model']) ||
+      empty($form_state['values']['islandora_checksum_checker_solr_model'])) {
+      form_set_error('islandora_checksum_checker_solr_model', t('Must provide a content model Solr field.'));
+    }
+  }
 }
 
 /**
@@ -319,6 +377,26 @@ function islandora_checksum_checker_validate_checksum($pid) {
 }
 
 /**
+ * Gets PIDs of all objects that are not collection objects. Uses the
+ * system variable 'islandora_checksum_checker_last_item_checked' to page
+ * through all the objects in the repo.
+ *
+ * @param int $limit
+ *   The number of items to add to the queue.
+ *
+ * @return array
+ *   An array of PIDs.
+ */
+function islandora_checksum_checker_get_objects($limit) {
+  if (module_exists('islandora_solr') && variable_get('islandora_checksum_checker_use_solr', FALSE)) {
+    return islandora_checksum_checker_get_objects_solr($limit);
+  }
+  else {
+    return islandora_checksum_checker_get_objects_ri($limit);
+  }
+}
+
+/**
  * Query the RI index.
  *
  * Gets PIDs of all objects that are not collection objects. Uses the
@@ -331,7 +409,7 @@ function islandora_checksum_checker_validate_checksum($pid) {
  * @return array
  *   An array of PIDs.
  */
-function islandora_checksum_checker_get_objects($limit) {
+function islandora_checksum_checker_get_objects_ri($limit) {
   $offset = variable_get('islandora_checksum_checker_last_item_checked', '0');
   // We need to add 1 to the offset so we can use it in the RI query, except
   // the first time this function is invoked
@@ -392,7 +470,97 @@ EOQ;
 }
 
 /**
- * Query the RI index for a count.
+ * Query the Solr index.
+ *
+ * Gets PIDs of all objects that are not collection objects. Uses the
+ * system variable 'islandora_checksum_checker_last_item_checked' to page
+ * through all the objects in the repo.
+ *
+ * @param int $limit
+ *   The number of items to add to the queue.
+ *
+ * @return array
+ *   An array of PIDs.
+ */
+function islandora_checksum_checker_get_objects_solr($limit) {
+  global $user;
+  module_load_include('inc', 'islandora_solr', 'includes/utilities.inc');
+
+  // Need to switch to admin to get all objects.
+  $original_user = $user;
+  $old_state = drupal_save_session();
+  drupal_save_session(FALSE);
+  $user = user_load(1);
+
+  $offset = variable_get('islandora_checksum_checker_last_item_checked', '0');
+
+  $created_field = variable_get('islandora_checksum_checker_solr_created', 'fgs_createdDate_dt');
+  $model_field = variable_get('islandora_checksum_checker_solr_model', 'RELS_EXT_hasModel_uri_ms');
+
+  // Query the rindex to get all the objects that have a 'isMemberOfCollection'
+  // relationship but that do not have a 'islandora:collectionCModel' content
+  // model. Sort oldest to newest.
+  $solr_build = new IslandoraSolrQueryProcessor();
+  $params = array(
+    'fl' => "PID,{$created_field}",
+    'rows' => $limit,
+    'start' => $offset,
+    'sort' => "{$created_field} ASC",
+  );
+  $solr_query = format_string("-!model_field:(\"info:fedora/islandora:collectionCModel\" OR \"islandora:collectionCModel\")",
+    array(
+      '!model_field' => $model_field,
+    )
+  );
+
+  $solr_build->buildQuery($solr_query, $params);
+  $solr_build->solrParams = islandora_solr_remove_base_filters($solr_build->solrParams);
+  $solr_build->solrLimit = $limit;
+  $solr_build->solrStart = $offset;
+  if (module_exists('islandora_compound_object')) {
+    // Remove compound part limitations. We remove all these individual filters
+    // to maintain namespace restrictions.
+    $compound_fq = array();
+    $compound_fq[] = variable_get('islandora_compound_object_solr_fq', '-RELS_EXT_isConstituentOf_uri_mt:[* TO *]');
+    $solr_build->solrParams['fq'] = array_diff($solr_build->solrParams['fq'], $compound_fq);
+  }
+
+  $solr_build->executeQuery(FALSE);
+  if (isset($solr_build->islandoraSolrResult['response']['objects'])) {
+    $results = $solr_build->islandoraSolrResult['response']['objects'];
+  }
+  else {
+    $results = array();
+  }
+  // Switch back to user
+  $user = $original_user;
+  drupal_save_session($old_state);
+
+  $objects_to_check = array_map(function($o) {
+    return $o['PID'];
+  }, $results);
+
+  // If the number of results returned is fewer than $limit, assume
+  // that we have gotten all objects from the rindex and reset
+  // $offset to 0.
+  if (count($results) < $limit) {
+    $offset = 0;
+    if (variable_get('islandora_checksum_checker_send_complete_message', 0)) {
+      islandora_checksum_checker_send_check_complete_message();
+      variable_set('islandora_checksum_checker_mismatches', array());
+    }
+  }
+  else {
+    $offset = (int) $offset + (int) $limit;
+  }
+  // Update the offset for use in next cron run.
+  variable_set('islandora_checksum_checker_last_item_checked', $offset);
+
+  return $objects_to_check;
+}
+
+/**
+ * Query for a count.
  *
  * Gets the number of items that the checksum checker will run against.
  *
@@ -400,6 +568,23 @@ EOQ;
  *   Count of pids.
  */
 function islandora_checksum_checker_get_number_objects() {
+  if (module_exists('islandora_solr') && variable_get('islandora_checksum_checker_use_solr', FALSE)) {
+    return islandora_checksum_checker_get_number_objects_solr();
+  }
+  else {
+    return islandora_checksum_checker_get_number_objects_ri();
+  }
+}
+
+/**
+ * Query the RI index for a count.
+ *
+ * Gets the number of items that the checksum checker will run against.
+ *
+ * @return int
+ *   Count of pids.
+ */
+function islandora_checksum_checker_get_number_objects_ri() {
   $user = user_load(1);
   drupal_static_reset('islandora_get_tuque_connection');
   $tuque = islandora_get_tuque_connection($user);
@@ -420,6 +605,47 @@ WHERE {
 }
 EOQ;
   return $tuque->repository->ri->countQuery($ri_query, 'sparql');
+}
+
+/**
+ * Query the Solr index for a count.
+ *
+ * Gets the number of items that the checksum checker will run against.
+ *
+ * @return int
+ *   Count of pids.
+ */
+function islandora_checksum_checker_get_number_objects_solr() {
+  module_load_include('inc', 'islandora_solr', 'includes/utilities.inc');
+
+  $created_field = variable_get('islandora_checksum_checker_solr_created', 'fgs_createdDate_dt');
+  $model_field = variable_get('islandora_checksum_checker_solr_model', 'RELS_EXT_hasModel_uri_ms');
+
+  // Query the rindex to get all the objects that have a 'isMemberOfCollection'
+  // relationship but that do not have a 'islandora:collectionCModel' content
+  // model. Sort oldest to newest.
+  $solr_build = new IslandoraSolrQueryProcessor();
+  $params = array(
+    'fl' => "PID,{$created_field}",
+    'rows' => 0,
+  );
+  $solr_query = format_string("-!model_field:(\"info:fedora/islandora:collectionCModel\" OR \"islandora:collectionCModel\")",
+    array(
+      '!model_field' => $model_field,
+    )
+  );
+  $solr_build->buildQuery($solr_query, $params);
+  $solr_build->solrParams = islandora_solr_remove_base_filters($solr_build->solrParams);
+  $solr_build->executeQuery(FALSE);
+  if (isset($solr_build->islandoraSolrResult['response']['numFound'])) {
+    $num_found = $solr_build->islandoraSolrResult['response']['numFound'];
+  }
+  else {
+    watchdog('islandora_checksum_checker', 'Did not find numFound value for Solr query.', WATCHDOG_NOTICE);
+    $num_found = 0;
+  }
+
+  return $num_found;
 }
 
 /**

@@ -61,7 +61,7 @@ Checksum Checker provides two optional drush options that will calculate the num
 Using these two values, and the number of objects in your repository (which you do not need to provide), Checksum Checker will calculate the number of objects to check each cron run.
 
 ### Disable Checksum Checker from triggering an Audit log update
-__WARNING__: This is probably not something you want to change. That's why it isn't in the admin configuration page. Disabling this will prevent fixity checking events from being added to the audit log of each object. Islandora PREMIS wil not long see fixity events because they will no longer be updating the audit log.
+__WARNING__: This is probably not something you want to change. That's why it isn't in the admin configuration page. Disabling this will prevent fixity checking events from being added to the audit log of each object. Islandora PREMIS will no longer see fixity events because echecksum checker will no longer be updating the audit log every time it checks the checksum.
 ```shell
 # Disable Audit Log update when checksum checker touches an object
 $ drush vset islandora_checksum_checker_disable_audit_log_update 1

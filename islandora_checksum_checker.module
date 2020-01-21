@@ -294,7 +294,9 @@ function islandora_checksum_checker_validate_checksum($pid) {
         );
         $log_message = array('logMessage' => trim($fixity_event_message));
         try {
-          $tuque->api->m->modifyObject($pid, $log_message);
+          if (!variable_get('islandora_checksum_checker_disable_audit_log_update', FALSE)) {
+            $tuque->api->m->modifyObject($pid, $log_message);
+          }
         }
         catch (RepositoryException $e) {
           watchdog('islandora_checksum_checker', 'Unable to add fixity event message for !object, !ds_id: !message',
